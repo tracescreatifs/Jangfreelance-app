@@ -40,16 +40,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
+    try {
+      // 1. Créer le compte utilisateur
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
         },
-      },
-    });
-    return { error };
+      });
+
+      if (error) {
+        return { error };
+      }
+
+      // 2. Créer le profil manuellement si l'utilisateur a été créé
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            user_id: data.user.id,
+            full_name: fullName,
+            email: email,
+          }, {
+            onConflict: 'id'
+          });
+
+        if (profileError) {
+          console.error('Erreur création profil:', profileError);
+          // On ne bloque pas l'inscription si le profil échoue
+          // Le profil sera créé plus tard
+        }
+      }
+
+      return { error: null };
+    } catch (err) {
+      console.error('Erreur inscription:', err);
+      return { error: { message: 'Erreur lors de l\'inscription' } };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
