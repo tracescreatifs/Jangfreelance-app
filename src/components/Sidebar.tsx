@@ -12,8 +12,10 @@ import {
   Clock,
   Settings,
   LogOut,
-  Crown
+  Crown,
+  Briefcase
 } from 'lucide-react';
+import { APP_VERSION } from '@/lib/version';
 
 const Sidebar = () => {
   const { user, signOut } = useAuth();
@@ -28,6 +30,7 @@ const Sidebar = () => {
     { name: 'Dashboard', icon: Home, path: '/' },
     { name: 'Projets', icon: FolderOpen, path: '/projets' },
     { name: 'Clients', icon: Users, path: '/clients' },
+    { name: 'Services', icon: Briefcase, path: '/services' },
     { name: 'Timer', icon: Clock, path: '/timer' },
     { name: 'Suivi de Projet', icon: BarChart3, path: '/suivi' },
     { name: 'Factures', icon: FileText, path: '/factures' },
@@ -38,39 +41,44 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 h-screen glass-morphism p-6 fixed left-0 top-0 z-50">
+    <div className="w-64 h-screen glass-morphism p-6 fixed left-0 top-0 z-50 flex flex-col">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">Jang</h1>
-        <p className="text-purple-200 text-sm">{user?.email}</p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-white mb-1">Jang</h1>
+          <span className="text-[10px] text-white/30 font-mono bg-white/5 px-1.5 py-0.5 rounded">
+            v{APP_VERSION}
+          </span>
+        </div>
+        <p className="text-white/50 text-sm truncate">{user?.email}</p>
       </div>
-      
-      <nav className="space-y-2">
+
+      <nav className="space-y-1 flex-1 overflow-y-auto">
         {menuItems.map((item) => (
           <NavLink
             key={item.name}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center px-4 py-3 rounded-lg transition-all duration-200 ${
+              `flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive
-                  ? 'bg-white/20 text-white shadow-lg'
-                  : 'text-purple-100 hover:bg-white/10 hover:text-white'
+                  ? 'bg-white/15 text-white shadow-lg'
+                  : 'text-white/60 hover:bg-white/8 hover:text-white'
               }`
             }
           >
             <item.icon className="w-5 h-5 mr-3" />
-            <span className="font-medium">{item.name}</span>
+            <span className="font-medium text-sm">{item.name}</span>
           </NavLink>
         ))}
       </nav>
 
       {/* Déconnexion */}
-      <div className="absolute bottom-6 left-6 right-6">
+      <div className="pt-4 border-t border-white/10">
         <button
           onClick={handleSignOut}
-          className="flex items-center w-full px-4 py-3 rounded-lg text-red-300 hover:bg-red-500/10 hover:text-red-200 transition-all duration-200"
+          className="flex items-center w-full px-4 py-2.5 rounded-lg text-white/40 hover:bg-white/5 hover:text-white/70 transition-all duration-200"
         >
           <LogOut className="w-5 h-5 mr-3" />
-          <span className="font-medium">Déconnexion</span>
+          <span className="font-medium text-sm">Déconnexion</span>
         </button>
       </div>
     </div>

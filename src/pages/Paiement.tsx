@@ -9,14 +9,11 @@ import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { useSubscription } from '../hooks/useSubscription';
 import { useToast } from '../hooks/use-toast';
 
-// Configuration PayDunya (à remplacer par vos vraies clés)
-const PAYDUNYA_CONFIG = {
-  masterKey: 'VOTRE_MASTER_KEY', // Remplacer par votre clé
-  privateKey: 'VOTRE_PRIVATE_KEY', // Remplacer par votre clé
-  publicKey: 'VOTRE_PUBLIC_KEY', // Remplacer par votre clé
-  token: 'VOTRE_TOKEN', // Remplacer par votre clé
-  mode: 'test' // 'test' ou 'live'
-};
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
+
+// URL de base Supabase pour les Edge Functions
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 type PaymentMethod = 'orange_money' | 'wave' | 'free_money' | 'mtn_momo';
 
@@ -63,6 +60,7 @@ const Paiement = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { updateSubscriptionAfterPayment } = useSubscription();
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('orange_money');
@@ -117,53 +115,42 @@ const Paiement = () => {
     setPaymentStatus('pending');
 
     try {
-      // Simuler l'appel à PayDunya
-      // En production, vous ferez un vrai appel à votre backend qui communiquera avec PayDunya
+      const baseUrl = window.location.origin;
 
-      const paymentData = {
-        amount: getPrice(),
-        description: `Abonnement ${plan.name} - ${billingCycle === 'yearly' ? 'Annuel' : 'Mensuel'}`,
-        phone: phoneNumber.replace(/\s/g, ''),
-        paymentMethod: selectedMethod,
-        currency: 'XOF'
-      };
+      // Appeler l'Edge Function PayDunya
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/paydunya-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({
+          amount: getPrice(),
+          description: `Abonnement ${plan.name} - ${billingCycle === 'yearly' ? 'Annuel' : 'Mensuel'}`,
+          customerName: user?.email?.split('@')[0] || 'Client',
+          customerEmail: user?.email || '',
+          customerPhone: phoneNumber.replace(/\s/g, ''),
+          callbackUrl: `${SUPABASE_URL}/functions/v1/paydunya-webhook`,
+          returnUrl: `${baseUrl}/paiement/success?plan=${plan.id}&cycle=${billingCycle}`,
+          cancelUrl: `${baseUrl}/paiement/cancel`,
+        }),
+      });
 
-      console.log('Initiation paiement PayDunya:', paymentData);
+      const result = await response.json();
 
-      // Simulation d'un délai de traitement
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // Simulation de réponse PayDunya
-      // En production, vous recevrez un vrai token de transaction
-      const mockTransactionId = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      setTransactionId(mockTransactionId);
-
-      // Simulation de succès (80% de chance)
-      const isSuccess = Math.random() > 0.2;
-
-      if (isSuccess) {
-        // Mettre à jour l'abonnement dans Supabase
-        const result = await updateSubscriptionAfterPayment(
-          plan.id,
+      if (result.success && result.invoiceUrl) {
+        // Stocker les infos de paiement en attente
+        localStorage.setItem('pendingPayment', JSON.stringify({
+          planId: plan.id,
           billingCycle,
-          {
-            transactionId: mockTransactionId,
-            paymentMethod: selectedMethod,
-            amount: getPrice()
-          }
-        );
+          amount: getPrice(),
+          token: result.token,
+        }));
 
-        if (result.success) {
-          setPaymentStatus('success');
-          toast({
-            title: "Paiement réussi !",
-            description: `Votre abonnement ${plan.name} est maintenant actif`,
-          });
-        } else {
-          throw new Error(result.message);
-        }
+        // Rediriger vers la page de paiement PayDunya
+        window.location.href = result.invoiceUrl;
       } else {
-        throw new Error('Paiement refusé par l\'opérateur');
+        throw new Error(result.error || 'Erreur lors de la création du paiement');
       }
     } catch (error: any) {
       console.error('Erreur paiement:', error);
@@ -173,7 +160,6 @@ const Paiement = () => {
         description: error.message || "Une erreur est survenue lors du paiement",
         variant: "destructive"
       });
-    } finally {
       setIsProcessing(false);
     }
   };

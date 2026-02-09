@@ -1,22 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Globe, MapPin, Clock, Calendar, DollarSign } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useUserPreferences } from '../../hooks/useUserPreferences';
+import { useToast } from '../../hooks/use-toast';
 
 const Localisation = () => {
-  const [settings, setSettings] = useState({
+  const { preferences: savedPrefs, loading, updatePreferences } = useUserPreferences();
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const defaultSettings = {
     langue: 'fr',
     pays: 'SN',
     fuseau: 'Africa/Dakar',
     devise: 'XOF',
     formatDate: 'dd/MM/yyyy',
     formatHeure: '24h',
-    premierJour: '1', // Lundi
+    premierJour: '1',
     separateurDecimal: ',',
     separateurMilliers: ' ',
-  });
+  };
+
+  const [settings, setSettings] = useState(defaultSettings);
+  const [savedSettings, setSavedSettings] = useState(defaultSettings);
+
+  useEffect(() => {
+    if (savedPrefs) {
+      const loaded = {
+        langue: savedPrefs.langue || 'fr',
+        pays: 'SN',
+        fuseau: savedPrefs.fuseauHoraire || 'Africa/Dakar',
+        devise: savedPrefs.devise || 'XOF',
+        formatDate: savedPrefs.formatDate || 'dd/MM/yyyy',
+        formatHeure: savedPrefs.formatHeure || '24h',
+        premierJour: '1',
+        separateurDecimal: ',',
+        separateurMilliers: ' ',
+      };
+      setSettings(loaded);
+      setSavedSettings(loaded);
+      setHasChanges(false);
+    }
+  }, [savedPrefs]);
 
   const langues = [
     { code: 'fr', nom: 'Français', flag: '🇫🇷' },
@@ -57,7 +86,7 @@ const Localisation = () => {
   const handleSettingChange = (key: string, value: string) => {
     setSettings(prev => {
       const newSettings = { ...prev, [key]: value };
-      
+
       // Auto-ajustement quand on change de pays
       if (key === 'pays') {
         const selectedCountry = pays.find(p => p.code === value);
@@ -66,9 +95,15 @@ const Localisation = () => {
           newSettings.fuseau = selectedCountry.fuseau;
         }
       }
-      
+
       return newSettings;
     });
+    setHasChanges(true);
+  };
+
+  const handleCancel = () => {
+    setSettings(savedSettings);
+    setHasChanges(false);
   };
 
   const getCurrentCountry = () => pays.find(p => p.code === settings.pays);
@@ -93,9 +128,40 @@ const Localisation = () => {
     return `${formatted} ${devise?.symbole || ''}`;
   };
 
-  const handleSave = () => {
-    console.log('Sauvegarde paramètres localisation:', settings);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updatePreferences({
+        langue: settings.langue,
+        fuseauHoraire: settings.fuseau,
+        devise: settings.devise,
+        formatDate: settings.formatDate,
+        formatHeure: settings.formatHeure,
+      });
+      setSavedSettings(settings);
+      setHasChanges(false);
+      toast({
+        title: "Localisation sauvegardée",
+        description: "Vos paramètres régionaux ont été mis à jour"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les paramètres",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -322,14 +388,20 @@ const Localisation = () => {
 
         {/* Boutons d'action */}
         <div className="flex justify-end space-x-4 mt-8">
-          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+          <Button
+            variant="outline"
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={handleCancel}
+            disabled={!hasChanges}
+          >
             Annuler
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
+            disabled={isSaving || !hasChanges}
             className="bg-gradient-to-r from-purple-500 to-blue-500 hover:scale-105 transition-transform"
           >
-            Sauvegarder
+            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>
       </div>

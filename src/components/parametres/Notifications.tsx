@@ -1,44 +1,70 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Mail, MessageSquare, Calendar, DollarSign, Users, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useUserPreferences } from '../../hooks/useUserPreferences';
+import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../hooks/use-toast';
 
 const Notifications = () => {
-  const [preferences, setPreferences] = useState({
-    // Notifications push
+  const { preferences: savedPrefs, loading, updatePreferences } = useUserPreferences();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const defaultPreferences = {
     browserNotifications: true,
     desktopNotifications: false,
-    
-    // Email
     emailNotifications: true,
     emailFrequency: 'instant',
-    
-    // Types de notifications
     newProject: true,
     projectDeadline: true,
     invoiceOverdue: true,
     paymentReceived: true,
     clientMessages: true,
     systemUpdates: false,
-    
-    // Horaires
     quietHours: true,
     quietStart: '22:00',
     quietEnd: '08:00',
     weekendNotifications: false,
-    
-    // Canaux
     emailEnabled: true,
     smsEnabled: false,
     pushEnabled: true,
-  });
+  };
+
+  const [preferences, setPreferences] = useState(defaultPreferences);
+  const [savedState, setSavedState] = useState(defaultPreferences);
+
+  useEffect(() => {
+    if (savedPrefs) {
+      const loaded = {
+        ...defaultPreferences,
+        emailNotifications: savedPrefs.notificationsEmail,
+        emailEnabled: savedPrefs.notificationsEmail,
+        pushEnabled: savedPrefs.notificationsPush,
+        invoiceOverdue: savedPrefs.notificationsRappels,
+        paymentReceived: savedPrefs.notificationsPayment,
+        newProject: savedPrefs.notificationsNewClient,
+      };
+      setPreferences(loaded);
+      setSavedState(loaded);
+      setHasChanges(false);
+    }
+  }, [savedPrefs]);
 
   const handlePreferenceChange = (key: string, value: any) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
+  };
+
+  const handleCancel = () => {
+    setPreferences(savedState);
+    setHasChanges(false);
   };
 
   const emailFrequencies = [
@@ -94,16 +120,70 @@ const Notifications = () => {
     }
   ];
 
-  const handleSave = () => {
-    console.log('Sauvegarde préférences notifications:', preferences);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updatePreferences({
+        notificationsEmail: preferences.emailNotifications,
+        notificationsPush: preferences.pushEnabled,
+        notificationsRappels: preferences.invoiceOverdue,
+        notificationsPayment: preferences.paymentReceived,
+        notificationsNewClient: preferences.newProject,
+      });
+      setSavedState(preferences);
+      setHasChanges(false);
+      toast({
+        title: "Notifications sauvegardées",
+        description: "Vos préférences ont été mises à jour"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les préférences",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const testNotification = () => {
-    console.log('Test de notification');
-    if (preferences.browserNotifications && 'Notification' in window) {
-      new Notification('FreelanceHub Studio', {
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const testNotification = async () => {
+    if (!('Notification' in window)) {
+      toast({
+        title: "Non supporté",
+        description: "Les notifications ne sont pas supportées par votre navigateur",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    let permission = Notification.permission;
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+
+    if (permission === 'granted') {
+      new Notification('Jang - Freelance', {
         body: 'Ceci est une notification de test !',
         icon: '/favicon.ico'
+      });
+      toast({
+        title: "Notification envoyée",
+        description: "Vérifiez vos notifications système"
+      });
+    } else {
+      toast({
+        title: "Permission refusée",
+        description: "Autorisez les notifications dans les paramètres de votre navigateur",
+        variant: "destructive"
       });
     }
   };
@@ -132,7 +212,7 @@ const Notifications = () => {
                     <Mail className="w-5 h-5 text-blue-400" />
                     <div>
                       <Label className="text-white font-medium">Email</Label>
-                      <p className="text-purple-200 text-sm">alex@example.com</p>
+                      <p className="text-purple-200 text-sm">{user?.email || 'Non configuré'}</p>
                     </div>
                   </div>
                   <Switch
@@ -292,14 +372,20 @@ const Notifications = () => {
 
         {/* Boutons d'action */}
         <div className="flex justify-end space-x-4 mt-8">
-          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+          <Button
+            variant="outline"
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={handleCancel}
+            disabled={!hasChanges}
+          >
             Annuler
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
+            disabled={isSaving || !hasChanges}
             className="bg-gradient-to-r from-purple-500 to-blue-500 hover:scale-105 transition-transform"
           >
-            Sauvegarder
+            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>
       </div>

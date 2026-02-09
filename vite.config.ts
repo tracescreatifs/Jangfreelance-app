@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
         name: 'Jang - Gestion Freelance',
         short_name: 'Jang',
         description: 'Application de gestion pour freelances - Factures, Clients, Projets',
-        theme_color: '#8b5cf6',
-        background_color: '#0f0a1e',
+        theme_color: '#0a0a0a',
+        background_color: '#0a0a0a',
         display: 'standalone',
         orientation: 'portrait',
         scope: '/',
@@ -80,6 +80,7 @@ export default defineConfig(({ mode }) => ({
         lang: 'fr-FR'
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3 MiB
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {

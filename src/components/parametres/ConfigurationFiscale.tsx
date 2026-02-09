@@ -1,24 +1,25 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calculator, AlertTriangle, Check, Info } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription } from '../ui/alert';
+import { useFiscalConfig } from '../../hooks/useFiscalConfig';
+import { useToast } from '../../hooks/use-toast';
 
 const ConfigurationFiscale = () => {
-  const [formData, setFormData] = useState({
-    paysExercice: 'Sénégal',
-    regimeFiscal: 'BRS',
-    caPrevisionnelAnnuel: '12000000',
-    ninea: '007654321',
-    rccm: 'SN-DKR-2020-A-1234',
-    numeroTVA: '',
-    banque: 'CBAO Groupe Attijariwafa',
-    iban: 'SN08 CB30 0011 1234 5678 9012',
-    swift: 'CBAOSNDA',
-  });
+  const { config, loading, updateConfig } = useFiscalConfig();
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState(config);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    setFormData(config);
+    setHasChanges(false);
+  }, [config]);
 
   const pays = [
     { code: 'SN', nom: 'Sénégal', flag: '🇸🇳', seuilTVA: 50000000 },
@@ -36,6 +37,12 @@ const ConfigurationFiscale = () => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setHasChanges(true);
+  };
+
+  const handleCancel = () => {
+    setFormData(config);
+    setHasChanges(false);
   };
 
   const formatCurrency = (amount: number) => {
@@ -53,9 +60,33 @@ const ConfigurationFiscale = () => {
     return ca >= seuil && formData.regimeFiscal === 'BRS';
   };
 
-  const handleSave = () => {
-    console.log('Sauvegarde configuration fiscale:', formData);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateConfig(formData);
+      toast({
+        title: "Configuration sauvegardée",
+        description: "Vos informations fiscales ont été mises à jour"
+      });
+      setHasChanges(false);
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la configuration",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -241,14 +272,20 @@ const ConfigurationFiscale = () => {
 
         {/* Boutons d'action */}
         <div className="flex justify-end space-x-4">
-          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+          <Button
+            variant="outline"
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={handleCancel}
+            disabled={!hasChanges}
+          >
             Annuler
           </Button>
-          <Button 
+          <Button
             onClick={handleSave}
+            disabled={isSaving || !hasChanges}
             className="bg-gradient-to-r from-purple-500 to-blue-500 hover:scale-105 transition-transform"
           >
-            Sauvegarder
+            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>
       </div>

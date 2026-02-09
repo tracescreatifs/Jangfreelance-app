@@ -18,8 +18,10 @@ import Comptabilite from "./pages/Comptabilite";
 import Suivi from "./pages/Suivi";
 import Exports from "./pages/Exports";
 import Parametres from "./pages/Parametres";
+import Services from "./pages/Services";
 import Tarifs from "./pages/Tarifs";
 import Paiement from "./pages/Paiement";
+import PaiementSuccess from "./pages/PaiementSuccess";
 import LicenseActivation from "./pages/LicenseActivation";
 import LicenseAdmin from "./pages/LicenseAdmin";
 import NotFound from "./pages/NotFound";
@@ -49,9 +51,11 @@ const App = () => (
             <Route path="/comptabilite" element={<ProtectedRoute><Comptabilite /></ProtectedRoute>} />
             <Route path="/suivi" element={<ProtectedRoute><Suivi /></ProtectedRoute>} />
             <Route path="/exports" element={<ProtectedRoute><Exports /></ProtectedRoute>} />
+            <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
             <Route path="/parametres" element={<ProtectedRoute><Parametres /></ProtectedRoute>} />
             <Route path="/tarifs" element={<ProtectedRoute><Tarifs /></ProtectedRoute>} />
             <Route path="/paiement" element={<ProtectedRoute><Paiement /></ProtectedRoute>} />
+            <Route path="/paiement/success" element={<ProtectedRoute><PaiementSuccess /></ProtectedRoute>} />
             <Route path="/license" element={<ProtectedRoute><LicenseActivation /></ProtectedRoute>} />
             <Route path="/license-admin" element={<ProtectedRoute><LicenseAdmin /></ProtectedRoute>} />
 

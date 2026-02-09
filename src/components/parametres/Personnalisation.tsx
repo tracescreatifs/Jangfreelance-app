@@ -8,10 +8,15 @@ import { Switch } from '../ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { useUserPreferences } from '../../hooks/useUserPreferences';
 
 const Personnalisation = () => {
   const { toast } = useToast();
-  const [preferences, setPreferences] = useState({
+  const { preferences: savedPrefs, loading, updatePreferences } = useUserPreferences();
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const defaultPrefs = {
     theme: 'dark',
     accentColor: 'purple',
     primaryColor: '#8B5CF6',
@@ -22,21 +27,44 @@ const Personnalisation = () => {
     showProgressBars: true,
     sidebarCollapsed: false,
     tableStyle: 'modern',
-  });
+  };
 
-  // Charger les préférences au montage du composant
-  useEffect(() => {
-    const savedPreferences = localStorage.getItem('userPreferences');
-    if (savedPreferences) {
+  const [preferences, setPreferences] = useState(() => {
+    // Charger depuis localStorage au premier rendu
+    const stored = localStorage.getItem('userPreferences');
+    if (stored) {
       try {
-        const parsed = JSON.parse(savedPreferences);
-        setPreferences(parsed);
-        applyPreferences(parsed);
-      } catch (error) {
-        console.error('Erreur lors du chargement des préférences:', error);
+        return { ...defaultPrefs, ...JSON.parse(stored) };
+      } catch {
+        return defaultPrefs;
       }
     }
-  }, []);
+    return defaultPrefs;
+  });
+
+  const [savedState, setSavedState] = useState(preferences);
+
+  // Charger les préférences depuis Supabase
+  useEffect(() => {
+    if (savedPrefs) {
+      const stored = localStorage.getItem('userPreferences');
+      let localPrefs = {};
+      if (stored) {
+        try { localPrefs = JSON.parse(stored); } catch { /* ignore */ }
+      }
+
+      const newPrefs = {
+        ...defaultPrefs,
+        ...localPrefs,
+        theme: savedPrefs.theme || 'dark',
+        primaryColor: savedPrefs.couleurPrincipale || '#8B5CF6',
+      };
+      setPreferences(newPrefs);
+      setSavedState(newPrefs);
+      setHasChanges(false);
+      applyPreferences(newPrefs);
+    }
+  }, [savedPrefs]);
 
   const themes = [
     { value: 'dark', label: 'Sombre', icon: Moon, description: 'Thème sombre (recommandé)' },
@@ -136,19 +164,34 @@ const Personnalisation = () => {
     const newPrefs = { ...preferences, [key]: value };
     setPreferences(newPrefs);
     applyPreferences(newPrefs);
+    setHasChanges(true);
   };
 
-  const handleSave = () => {
+  const handleCancel = () => {
+    setPreferences(savedState);
+    applyPreferences(savedState);
+    setHasChanges(false);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
     try {
+      // Sauvegarder dans Supabase
+      await updatePreferences({
+        theme: preferences.theme,
+        couleurPrincipale: preferences.primaryColor,
+      });
+
+      // Aussi en localStorage pour persistance rapide
       localStorage.setItem('userPreferences', JSON.stringify(preferences));
       applyPreferences(preferences);
-      
+      setSavedState(preferences);
+      setHasChanges(false);
+
       toast({
         title: "Paramètres sauvegardés",
         description: "Vos préférences ont été appliquées avec succès.",
       });
-      
-      console.log('Préférences sauvegardées et appliquées:', preferences);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
       toast({
@@ -156,28 +199,19 @@ const Personnalisation = () => {
         description: "Impossible de sauvegarder les préférences.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const resetToDefaults = () => {
-    const defaultPrefs = {
-      theme: 'dark',
-      accentColor: 'purple',
-      primaryColor: '#8B5CF6',
-      secondaryColor: '#3B82F6',
-      fontSize: 'medium',
-      compactMode: false,
-      animationsEnabled: true,
-      showProgressBars: true,
-      sidebarCollapsed: false,
-      tableStyle: 'modern',
-    };
     setPreferences(defaultPrefs);
     applyPreferences(defaultPrefs);
-    
+    setHasChanges(true);
+
     toast({
       title: "Paramètres réinitialisés",
-      description: "Les préférences par défaut ont été restaurées.",
+      description: "Cliquez sur Sauvegarder pour confirmer la réinitialisation.",
     });
   };
 
@@ -439,18 +473,27 @@ const Personnalisation = () => {
             Réinitialiser
           </Button>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-            <Button 
+            <Button
               onClick={previewTheme}
-              variant="outline" 
+              variant="outline"
               className="border-white/20 text-white hover:bg-white/10 w-full sm:w-auto"
             >
               Aperçu (3s)
             </Button>
-            <Button 
+            <Button
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10 w-full sm:w-auto"
+              onClick={handleCancel}
+              disabled={!hasChanges}
+            >
+              Annuler
+            </Button>
+            <Button
               onClick={handleSave}
+              disabled={isSaving || !hasChanges}
               className="bg-gradient-to-r from-purple-500 to-blue-500 hover:scale-105 transition-transform w-full sm:w-auto"
             >
-              Sauvegarder
+              {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
             </Button>
           </div>
         </div>

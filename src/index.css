@@ -1,12 +1,17 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   JANG v1.0 - NOIR & BLANC / LIQUID GLASS
+   ============================================ */
+
 :root {
-  --primary-color: #8B5CF6;
-  --secondary-color: #3B82F6;
+  --primary-color: #ffffff;
+  --secondary-color: #a0a0a0;
+  --glass-blur: 20px;
 }
 
 * {
@@ -17,16 +22,272 @@
 
 html, body, #root {
   height: 100%;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* ============================================
+   MODE DARK (défaut) - Noir profond
+   ============================================ */
 body {
-  @apply bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white;
+  background: #0a0a0a;
+  color: #ffffff;
   min-height: 100vh;
   background-attachment: fixed;
 }
 
-/* Mode compact */
+/* Subtle gradient background in dark mode */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, 0.015) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(255, 255, 255, 0.01) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   LIQUID GLASS EFFECT - Dark mode
+   ============================================ */
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-morphism:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Dark mode explicit class */
+.dark {
+  background: #0a0a0a;
+  color: #ffffff;
+}
+
+.dark body {
+  background: #0a0a0a;
+}
+
+.dark .glass-morphism {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================
+   MODE LIGHT - Blanc pur
+   ============================================ */
+.light {
+  background: #f5f5f5 !important;
+  color: #0a0a0a !important;
+}
+
+.light body {
+  background: #f5f5f5 !important;
+}
+
+.light::before,
+.light body::before {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(0, 0, 0, 0.015) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 0, 0, 0.01) 0%, transparent 50%);
+}
+
+.light .glass-morphism {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.light .glass-morphism:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode - textes */
+.light .text-white {
+  color: #0a0a0a !important;
+}
+
+.light .text-purple-200,
+.light .text-purple-100 {
+  color: #6b6b6b !important;
+}
+
+.light .text-purple-300 {
+  color: #4a4a4a !important;
+}
+
+.light .text-white\/50 {
+  color: rgba(10, 10, 10, 0.5) !important;
+}
+
+.light .text-white\/60 {
+  color: rgba(10, 10, 10, 0.6) !important;
+}
+
+.light .text-white\/70 {
+  color: rgba(10, 10, 10, 0.7) !important;
+}
+
+.light .text-white\/40 {
+  color: rgba(10, 10, 10, 0.4) !important;
+}
+
+.light .text-white\/30 {
+  color: rgba(10, 10, 10, 0.3) !important;
+}
+
+/* Light mode - backgrounds */
+.light .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.light .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.light .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.light .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.light .bg-white\/15 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+.light .bg-white\/4 {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+.light .hover\:bg-white\/10:hover {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.light .hover\:bg-white\/8:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+.light .hover\:bg-white\/5:hover {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Light mode - inputs */
+.light input,
+.light textarea,
+.light select {
+  color: #0a0a0a !important;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.light input::placeholder,
+.light textarea::placeholder {
+  color: #999 !important;
+  opacity: 0.7;
+}
+
+/* Light mode - boutons */
+.light button {
+  color: #0a0a0a !important;
+}
+
+.light .bg-gradient-to-r {
+  color: white !important;
+}
+
+/* Light mode - dropdowns & popovers */
+.light .bg-gray-800 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.light .border-gray-600 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.light .hover\:bg-gray-700:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Light mode - scrollbar */
+.light ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* ============================================
+   GRADIENTS - NOIR & BLANC ONLY
+   ============================================ */
+
+/* Override all purple/blue gradients to monochrome */
+.bg-gradient-to-r.from-purple-500.to-blue-500,
+.bg-gradient-to-r.from-purple-500.to-blue-500:hover {
+  background: linear-gradient(135deg, #333 0%, #555 100%) !important;
+}
+
+.light .bg-gradient-to-r.from-purple-500.to-blue-500,
+.light .bg-gradient-to-r.from-purple-500.to-blue-500:hover {
+  background: linear-gradient(135deg, #1a1a1a 0%, #333 100%) !important;
+}
+
+.bg-gradient-to-r.from-blue-500.to-purple-500,
+.bg-gradient-to-r.from-blue-500.to-purple-500:hover {
+  background: linear-gradient(135deg, #333 0%, #555 100%) !important;
+}
+
+.bg-gradient-to-r.from-green-500.to-emerald-500,
+.bg-gradient-to-r.from-green-500.to-emerald-500:hover {
+  background: linear-gradient(135deg, #2a2a2a 0%, #444 100%) !important;
+}
+
+/* Accent gradient for glass buttons */
+.bg-gradient-to-r {
+  color: white !important;
+}
+
+/* ============================================
+   MODE COMPACT
+   ============================================ */
 .compact-mode {
   --spacing-scale: 0.75;
 }
@@ -43,7 +304,9 @@ body {
   margin-top: 1.5rem;
 }
 
-/* Désactiver les animations */
+/* ============================================
+   ANIMATIONS TOGGLE
+   ============================================ */
 .no-animations *,
 .no-animations *:before,
 .no-animations *:after {
@@ -52,162 +315,239 @@ body {
   transition-duration: 0.01ms !important;
 }
 
-/* Glass morphism effect */
-.glass-morphism {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Dark mode specific styles */
-.dark {
-  @apply bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900;
-}
-
-.dark .glass-morphism {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Light mode specific styles */
-.light {
-  background: linear-gradient(135deg, #f0f2f5 0%, #e8ebf0 50%, #dfe3ee 100%) !important;
-  color: #1a1a1a !important;
-}
-
-.light body {
-  background: linear-gradient(135deg, #f0f2f5 0%, #e8ebf0 50%, #dfe3ee 100%) !important;
-}
-
-.light .glass-morphism {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(200, 200, 220, 0.3);
-  box-shadow: 0 4px 24px rgba(100, 100, 150, 0.08);
-}
-
-.light .text-white {
-  color: #1a1a1a !important;
-}
-
-.light .text-purple-200 {
-  color: #4a5568 !important;
-}
-
-.light .text-purple-300 {
-  color: #2d3748 !important;
-}
-
-.light .text-purple-100 {
-  color: #718096 !important;
-}
-
-.light .border-white\/20 {
-  border-color: rgba(200, 200, 220, 0.3) !important;
-}
-
-.light .bg-white\/10 {
-  background-color: rgba(255, 255, 255, 0.6) !important;
-  border: 1px solid rgba(200, 200, 220, 0.25);
-}
-
-.light .bg-white\/5 {
-  background-color: rgba(255, 255, 255, 0.4) !important;
-}
-
-.light .bg-white\/20 {
-  background-color: rgba(255, 255, 255, 0.75) !important;
-  border: 1px solid rgba(200, 200, 220, 0.3);
-}
-
-.light .hover\:bg-white\/10:hover {
-  background-color: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(200, 200, 220, 0.4) !important;
-}
-
-/* Inputs et selects en mode clair */
-.light input,
-.light textarea,
-.light select {
-  color: #1a1a1a !important;
-  background-color: rgba(255, 255, 255, 0.75) !important;
-  border-color: rgba(200, 200, 220, 0.4) !important;
-}
-
-.light input::placeholder,
-.light textarea::placeholder {
-  color: #a0aec0 !important;
-  opacity: 0.7;
-}
-
-/* Boutons en mode clair */
-.light button {
-  color: #1a1a1a !important;
-}
-
-.light .bg-gradient-to-r {
-  color: white !important;
-}
-
-/* Cards et conteneurs */
-.light .bg-gray-800 {
-  background-color: rgba(255, 255, 255, 0.75) !important;
-  border: 1px solid rgba(200, 200, 220, 0.25);
-}
-
-.light .border-gray-600 {
-  border-color: rgba(200, 200, 220, 0.35) !important;
-}
-
-.light .hover\:bg-gray-700:hover {
-  background-color: rgba(255, 255, 255, 0.85) !important;
-}
-
-/* Smooth transitions */
+/* ============================================
+   SMOOTH TRANSITIONS
+   ============================================ */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Custom scrollbar */
+/* ============================================
+   SCROLLBAR - Dark mode (default)
+   ============================================ */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Scrollbar en mode clair */
-.light ::-webkit-scrollbar-track {
-  background: rgba(230, 233, 240, 0.6);
-}
-
-.light ::-webkit-scrollbar-thumb {
-  background: rgba(160, 174, 192, 0.5);
-  border-radius: 4px;
-}
-
-.light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(160, 174, 192, 0.7);
-}
-
-/* Animation keyframes */
+/* ============================================
+   ANIMATIONS
+   ============================================ */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============================================
+   BADGE & STATUS COLORS - Monochrome
+   ============================================ */
+.bg-purple-500 {
+  background-color: #404040 !important;
+}
+
+.bg-amber-500 {
+  background-color: #555 !important;
+}
+
+.text-purple-400 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.light .text-purple-400 {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.light .bg-purple-500 {
+  background-color: #e0e0e0 !important;
+  color: #333 !important;
+}
+
+.light .bg-amber-500 {
+  background-color: #d0d0d0 !important;
+  color: #333 !important;
+}
+
+/* Keep functional colors (green for success, red for error) */
+.bg-green-500 {
+  background-color: #4ade80 !important;
+}
+
+.bg-red-500\/10 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.text-green-400 {
+  color: #4ade80 !important;
+}
+
+.text-red-400 {
+  color: #f87171 !important;
+}
+
+.text-red-300 {
+  color: #fca5a5 !important;
+}
+
+.light .text-green-400 {
+  color: #16a34a !important;
+}
+
+.light .text-red-400 {
+  color: #dc2626 !important;
+}
+
+.light .text-red-300 {
+  color: #dc2626 !important;
+}
+
+/* ============================================
+   ADDITIONAL PURPLE -> MONOCHROME OVERRIDES
+   ============================================ */
+
+/* Avatar gradient */
+.bg-gradient-to-r.from-purple-400.to-blue-400 {
+  background: linear-gradient(135deg, #555 0%, #777 100%) !important;
+}
+
+.light .bg-gradient-to-r.from-purple-400.to-blue-400 {
+  background: linear-gradient(135deg, #bbb 0%, #ddd 100%) !important;
+}
+
+/* Purple icon colors -> white/gray */
+.text-purple-300 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.light .text-purple-300 {
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Blue accents -> gray */
+.text-blue-400 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.text-blue-200 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.light .text-blue-400 {
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.light .text-blue-200 {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
+.border-blue-500\/50 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.bg-blue-500\/10 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.light .border-blue-500\/50 {
+  border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.light .bg-blue-500\/10 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Yellow/orange -> muted gray */
+.text-orange-400 {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.text-yellow-400 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.bg-yellow-500 {
+  background-color: #666 !important;
+}
+
+.light .text-orange-400 {
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.light .text-yellow-400 {
+  color: rgba(0, 0, 0, 0.55) !important;
+}
+
+.light .bg-yellow-500 {
+  background-color: #ccc !important;
+  color: #333 !important;
+}
+
+/* Purple spinner/loading */
+.border-purple-400 {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.light .border-purple-400 {
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Green accents - subtle monochrome */
+.bg-green-500\/10 {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.border-green-500\/20 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.text-green-200 {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.light .bg-green-500\/10 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+.light .border-green-500\/20 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.light .text-green-200 {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Red accents */
+.border-red-500\/50 {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.hover\:bg-red-500\/10:hover {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* ============================================
+   DIALOG / POPOVER BACKGROUNDS
+   ============================================ */
+[data-radix-popper-content-wrapper] {
+  z-index: 100 !important;
 }

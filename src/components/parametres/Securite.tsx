@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { useSubscription } from '../../hooks/useSubscription';
 import { useToast } from '../../hooks/use-toast';
+import { supabase } from '../../lib/supabase';
 
 const Securite = () => {
   const navigate = useNavigate();
@@ -34,6 +35,7 @@ const Securite = () => {
   const [licenseKey, setLicenseKey] = useState('');
   const [isActivating, setIsActivating] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const handlePasswordChange = (field: string, value: string) => {
     setPasswords(prev => ({ ...prev, [field]: value }));
@@ -43,7 +45,7 @@ const Securite = () => {
     setSecurity(prev => ({ ...prev, [field]: value }));
   };
 
-  const changePassword = () => {
+  const changePassword = async () => {
     if (passwords.new !== passwords.confirm) {
       toast({
         title: "Erreur",
@@ -52,20 +54,74 @@ const Securite = () => {
       });
       return;
     }
-    console.log('Changement de mot de passe');
-    toast({
-      title: "Succès",
-      description: "Mot de passe modifié avec succès"
-    });
-    setPasswords({ current: '', new: '', confirm: '' });
+
+    if (passwords.new.length < 8) {
+      toast({
+        title: "Erreur",
+        description: "Le mot de passe doit contenir au moins 8 caractères",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      // Vérifier l'ancien mot de passe en se reconnectant
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwords.current,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Erreur",
+          description: "Le mot de passe actuel est incorrect",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Mettre à jour le mot de passe
+      const { error } = await supabase.auth.updateUser({
+        password: passwords.new
+      });
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message || "Impossible de changer le mot de passe",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Succès",
+        description: "Mot de passe modifié avec succès"
+      });
+      setPasswords({ current: '', new: '', confirm: '' });
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de changer le mot de passe",
+        variant: "destructive"
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const enable2FA = () => {
-    console.log('Activation 2FA');
-    handleSecurityChange('twoFactorEnabled', true);
+    // Supabase ne supporte pas nativement le 2FA TOTP dans le plan gratuit.
+    // On affiche un message informatif.
     toast({
-      title: "2FA Activée",
-      description: "L'authentification à deux facteurs est maintenant active"
+      title: "2FA - Bientôt disponible",
+      description: "L'authentification à deux facteurs sera disponible prochainement."
     });
   };
 
@@ -360,9 +416,16 @@ const Securite = () => {
               <Button
                 onClick={changePassword}
                 className="bg-gradient-to-r from-blue-500 to-purple-500"
-                disabled={!passwords.current || !passwords.new || passwords.new !== passwords.confirm}
+                disabled={!passwords.current || !passwords.new || passwords.new !== passwords.confirm || isChangingPassword}
               >
-                Changer le mot de passe
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Modification...
+                  </>
+                ) : (
+                  'Changer le mot de passe'
+                )}
               </Button>
             </CardContent>
           </Card>

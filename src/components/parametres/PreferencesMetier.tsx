@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Layout, Table, BarChart3, FileText, Clock, DollarSign, Users } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -7,40 +7,73 @@ import { Switch } from '../ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useUserPreferences } from '../../hooks/useUserPreferences';
+import { useToast } from '../../hooks/use-toast';
+
+const STORAGE_KEY = 'businessPreferences';
+
+const defaultPreferences = {
+  defaultView: 'grid',
+  autoSave: true,
+  showAdvancedFeatures: false,
+  defaultCurrency: 'CFA',
+  defaultTaxRate: '18',
+  defaultPaymentTerms: '30',
+  defaultProjectDuration: '30',
+  compactTables: false,
+  showProgressBars: true,
+  autoRefresh: true,
+  invoicePrefix: 'FAC',
+  quotePrefix: 'DEV',
+  autoInvoiceNumbers: true,
+  defaultProjectStatus: 'nouveau',
+  showClientInProjectList: true,
+  autoArchiveCompleted: false,
+  defaultHourlyRate: '15000',
+  roundTimeToQuarter: true,
+  autoStartTimer: false,
+};
 
 const PreferencesMetier = () => {
-  const [preferences, setPreferences] = useState({
-    // Affichage par défaut
-    defaultView: 'grid',
-    autoSave: true,
-    showAdvancedFeatures: false,
-    
-    // Valeurs par défaut
-    defaultCurrency: 'CFA',
-    defaultTaxRate: '18',
-    defaultPaymentTerms: '30',
-    defaultProjectDuration: '30',
-    
-    // Interface
-    compactTables: false,
-    showProgressBars: true,
-    autoRefresh: true,
-    
-    // Facturation
-    invoicePrefix: 'FAC',
-    quotePrefix: 'DEV',
-    autoInvoiceNumbers: true,
-    
-    // Projets
-    defaultProjectStatus: 'nouveau',
-    showClientInProjectList: true,
-    autoArchiveCompleted: false,
-    
-    // Temps
-    defaultHourlyRate: '15000',
-    roundTimeToQuarter: true,
-    autoStartTimer: false,
+  const { preferences: savedPrefs, loading, updatePreferences } = useUserPreferences();
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const [preferences, setPreferences] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        return { ...defaultPreferences, ...JSON.parse(stored) };
+      } catch {
+        return defaultPreferences;
+      }
+    }
+    return defaultPreferences;
   });
+
+  const [savedState, setSavedState] = useState(preferences);
+
+  // Synchroniser les champs Supabase quand ils arrivent
+  useEffect(() => {
+    if (savedPrefs) {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      let localPrefs = {};
+      if (stored) {
+        try { localPrefs = JSON.parse(stored); } catch { /* ignore */ }
+      }
+
+      const merged = {
+        ...defaultPreferences,
+        ...localPrefs,
+        defaultHourlyRate: String(savedPrefs.tauxHoraireDefaut || 15000),
+        defaultPaymentTerms: String(savedPrefs.delaiPaiementDefaut || 30),
+      };
+      setPreferences(merged);
+      setSavedState(merged);
+      setHasChanges(false);
+    }
+  }, [savedPrefs]);
 
   const viewOptions = [
     { value: 'grid', label: 'Grille', icon: Layout },
@@ -69,35 +102,59 @@ const PreferencesMetier = () => {
 
   const handlePreferenceChange = (key: string, value: any) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
+    setHasChanges(true);
   };
 
-  const handleSave = () => {
-    console.log('Sauvegarde préférences métier:', preferences);
+  const handleCancel = () => {
+    setPreferences(savedState);
+    setHasChanges(false);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Sauvegarder les champs Supabase
+      await updatePreferences({
+        tauxHoraireDefaut: parseInt(preferences.defaultHourlyRate) || 15000,
+        delaiPaiementDefaut: parseInt(preferences.defaultPaymentTerms) || 30,
+      });
+
+      // Sauvegarder tout en localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+      setSavedState(preferences);
+      setHasChanges(false);
+
+      toast({
+        title: "Préférences sauvegardées",
+        description: "Vos préférences métier ont été mises à jour"
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les préférences",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const resetToDefaults = () => {
-    setPreferences({
-      defaultView: 'grid',
-      autoSave: true,
-      showAdvancedFeatures: false,
-      defaultCurrency: 'CFA',
-      defaultTaxRate: '18',
-      defaultPaymentTerms: '30',
-      defaultProjectDuration: '30',
-      compactTables: false,
-      showProgressBars: true,
-      autoRefresh: true,
-      invoicePrefix: 'FAC',
-      quotePrefix: 'DEV',
-      autoInvoiceNumbers: true,
-      defaultProjectStatus: 'nouveau',
-      showClientInProjectList: true,
-      autoArchiveCompleted: false,
-      defaultHourlyRate: '15000',
-      roundTimeToQuarter: true,
-      autoStartTimer: false,
+    setPreferences(defaultPreferences);
+    setHasChanges(true);
+    toast({
+      title: "Préférences réinitialisées",
+      description: "Cliquez sur Sauvegarder pour confirmer."
     });
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -408,22 +465,28 @@ const PreferencesMetier = () => {
 
         {/* Boutons d'action */}
         <div className="flex justify-between mt-8">
-          <Button 
+          <Button
             onClick={resetToDefaults}
-            variant="outline" 
+            variant="outline"
             className="border-white/20 text-white hover:bg-white/10"
           >
             Réinitialiser
           </Button>
           <div className="space-x-4">
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+            <Button
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10"
+              onClick={handleCancel}
+              disabled={!hasChanges}
+            >
               Annuler
             </Button>
-            <Button 
+            <Button
               onClick={handleSave}
+              disabled={isSaving || !hasChanges}
               className="bg-gradient-to-r from-purple-500 to-blue-500 hover:scale-105 transition-transform"
             >
-              Sauvegarder
+              {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
             </Button>
           </div>
         </div>

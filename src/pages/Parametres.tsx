@@ -40,7 +40,7 @@ const Parametres = () => {
       .slice(0, 2);
   };
 
-  const displayName = userProfile?.nom || 'Utilisateur';
+  const displayName = [userProfile?.prenom, userProfile?.nom].filter(Boolean).join(' ') || 'Utilisateur';
   const displayTitle = proProfile?.secteurActivite || 'Freelance';
 
   const sections = [
@@ -97,9 +97,9 @@ const Parametres = () => {
           {/* Sidebar des paramètres */}
           <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-80 lg:min-h-screen lg:fixed lg:left-64 lg:top-0 glass-morphism border-r border-white/20 p-6 z-30`}>
             <div className="flex items-center space-x-3 mb-8">
-              {userProfile?.photo ? (
+              {userProfile?.photoUrl ? (
                 <img
-                  src={userProfile.photo}
+                  src={userProfile.photoUrl}
                   alt={displayName}
                   className="w-12 h-12 rounded-full object-cover"
                 />
