@@ -15,11 +15,32 @@ const ProfilProfessionnel = () => {
 
   // État local pour l'édition
   const [formData, setFormData] = useState(profile);
+  const hasUserEdited = useRef(false);
+  const formDataRef = useRef(formData);
 
-  // Synchroniser avec Supabase
+  // Garder formDataRef à jour
+  useEffect(() => { formDataRef.current = formData; }, [formData]);
+
+  // Synchroniser avec les données du hook quand elles arrivent
+  // (mais seulement si l'utilisateur n'a pas encore commencé à éditer)
   useEffect(() => {
-    setFormData(profile);
+    if (!hasUserEdited.current) {
+      setFormData(profile);
+    }
   }, [profile]);
+
+  // Sauvegarder dans localStorage à la fermeture du composant
+  useEffect(() => {
+    return () => {
+      if (hasUserEdited.current) {
+        try {
+          localStorage.setItem('jang_professional_profile', JSON.stringify(formDataRef.current));
+        } catch (e) {
+          // Best effort
+        }
+      }
+    };
+  }, []);
 
   const formeJuridiques = [
     'Entreprise personnelle',
@@ -46,6 +67,7 @@ const ProfilProfessionnel = () => {
   ];
 
   const handleInputChange = (field: string, value: string) => {
+    hasUserEdited.current = true;
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -82,6 +104,7 @@ const ProfilProfessionnel = () => {
     setIsSaving(true);
     try {
       await updateProfile(formData);
+      hasUserEdited.current = false;
       toast({
         title: "Profil professionnel sauvegardé",
         description: "Toutes vos modifications ont été enregistrées"
@@ -95,6 +118,11 @@ const ProfilProfessionnel = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    setFormData(profile);
+    hasUserEdited.current = false;
   };
 
   if (loading) {
@@ -355,7 +383,11 @@ const ProfilProfessionnel = () => {
 
         {/* Boutons d'action */}
         <div className="flex justify-end space-x-4">
-          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+          <Button
+            variant="outline"
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={handleCancel}
+          >
             Annuler
           </Button>
           <Button

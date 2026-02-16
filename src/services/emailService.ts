@@ -223,7 +223,11 @@ export const sendEmail = async (
   fromName: string = 'Jang'
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+    const url = `${SUPABASE_URL}/functions/v1/send-email`;
+    console.log('[emailService] Sending email to:', to, 'subject:', subject);
+    console.log('[emailService] URL:', url);
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -237,7 +241,9 @@ export const sendEmail = async (
       })
     });
 
+    console.log('[emailService] Response status:', response.status);
     const result = await response.json();
+    console.log('[emailService] Response body:', result);
 
     if (!response.ok) {
       throw new Error(result.error || 'Erreur lors de l\'envoi');
@@ -245,7 +251,7 @@ export const sendEmail = async (
 
     return { success: true, message: 'Email envoyé avec succès' };
   } catch (error) {
-    console.error('Erreur envoi email:', error);
+    console.error('[emailService] Erreur envoi email:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Erreur lors de l\'envoi de l\'email'
@@ -311,4 +317,47 @@ export const sendCustomEmail = async (
   `;
 
   return sendEmail(to, subject, html, fromName);
+};
+
+// Envoyer un email commercial (admin)
+export const sendCommercialEmail = async (
+  to: string,
+  toName: string,
+  subject: string,
+  message: string,
+  senderName: string = 'Jang'
+): Promise<{ success: boolean; message: string }> => {
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <h1 style="color: white; margin: 0; font-size: 28px;">Jang</h1>
+      <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">Gestion freelance simplifiée</p>
+    </div>
+    <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+        Bonjour <strong>${toName}</strong>,
+      </p>
+      <div style="color: #374151; font-size: 16px; line-height: 1.8; white-space: pre-line;">
+        ${message}
+      </div>
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 25px;">
+        L'équipe <strong>${senderName}</strong>
+      </p>
+    </div>
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+      <p style="margin: 0;">Envoyé via <strong>Jang</strong> - Gestion freelance</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  return sendEmail(to, subject, html, senderName);
 };

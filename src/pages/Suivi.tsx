@@ -50,13 +50,13 @@ const Suivi = () => {
 
       // Revenus des factures payées ce mois
       const monthRevenue = invoices
-        .filter(inv => inv.status === 'paid' && inv.date.startsWith(monthKey))
+        .filter(inv => inv.type === 'facture' && inv.status === 'Payé' && inv.createdAt.startsWith(monthKey))
         .reduce((sum, inv) => sum + inv.total, 0);
 
       // Dépenses ce mois
       const monthExpenses = transactions
-        .filter(t => t.type === 'expense' && t.date.startsWith(monthKey))
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter(t => t.type === 'depense' && t.date.startsWith(monthKey))
+        .reduce((sum, t) => sum + t.montant, 0);
 
       // Nombre de projets créés ce mois
       const monthProjects = projects
@@ -90,12 +90,18 @@ const Suivi = () => {
   }, [projects]);
 
   // Calculer les top clients
+  const extractName = (fullClientName: string) =>
+    fullClientName.split(' - ')[0].toLowerCase().trim();
+
   const clientsData = useMemo(() => {
     return clients
       .map(client => {
-        const clientProjects = projects.filter(p => p.clientId === client.id).length;
+        const clientNameLower = client.name.toLowerCase().trim();
+        const clientProjects = projects.filter(p =>
+          extractName(p.clientName) === clientNameLower
+        ).length;
         const clientRevenue = invoices
-          .filter(inv => inv.status === 'paid' && inv.clientId === client.id)
+          .filter(inv => inv.type === 'facture' && inv.status === 'Payé' && inv.clientName.toLowerCase().trim() === clientNameLower)
           .reduce((sum, inv) => sum + inv.total, 0);
 
         return {
@@ -135,6 +141,9 @@ const Suivi = () => {
 
   // Calcul des KPIs
   const currentMonth = revenueData[revenueData.length - 1] || { revenue: 0, expenses: 0, projects: 0 };
+  // Remplacer le nombre de projets "créés ce mois" par le vrai nombre de projets en cours
+  const activeProjectsCount = projects.filter(p => p.status === 'En cours').length;
+  const currentMonthWithActiveProjects = { ...currentMonth, projects: activeProjectsCount };
   const previousMonth = revenueData[revenueData.length - 2] || { revenue: 0, expenses: 0, projects: 0 };
   const revenueGrowth = previousMonth.revenue > 0
     ? ((currentMonth.revenue - previousMonth.revenue) / previousMonth.revenue) * 100
@@ -145,15 +154,15 @@ const Suivi = () => {
     <div className="min-h-screen">
       <Sidebar />
       
-      <div className="ml-64 p-8">
-        <div className="flex justify-between items-center mb-8">
+      <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Suivi de Projet</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Suivi de Projet</h1>
             <p className="text-purple-200">Tableau de bord analytique et rapports</p>
           </div>
-          
+
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
+            <SelectTrigger className="w-full sm:w-48 bg-white/10 border-white/20 text-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-gray-900 border-gray-700">
@@ -165,20 +174,20 @@ const Suivi = () => {
           </Select>
         </div>
 
-        <KPICards 
-          currentMonth={currentMonth}
+        <KPICards
+          currentMonth={currentMonthWithActiveProjects}
           revenueGrowth={revenueGrowth}
           totalHours={totalHours}
-          clientsCount={clientsData.length}
+          clientsCount={clients.length}
           formatCurrency={formatCurrency}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-6 sm:mb-8">
           <RevenueChart data={revenueData} formatCurrency={formatCurrency} />
           <ProjectStatusChart data={projectStatusData} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 mb-6 sm:mb-8">
           <TimeTrackingChart data={timeTrackingData} />
           <TopClients clients={clientsData} formatCurrency={formatCurrency} />
         </div>

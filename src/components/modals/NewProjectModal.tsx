@@ -21,7 +21,7 @@ interface NewProjectModalProps {
 }
 
 const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenChange }) => {
-  const { clients, updateClient } = useClients();
+  const { clients, updateClient, refreshClients } = useClients();
   const { addProject } = useProjects();
   const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -147,7 +147,8 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenChange })
     }
   };
 
-  const handleNewClientCreated = (clientId: string) => {
+  const handleNewClientCreated = async (clientId: string) => {
+    await refreshClients();
     setFormData(prev => ({ ...prev, clientId }));
     setIsNewClientModalOpen(false);
   };
@@ -167,7 +168,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenChange })
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-white">Nom du projet *</Label>
                 <Input
@@ -208,7 +209,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenChange })
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-white">Type de projet *</Label>
                 <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
@@ -240,7 +241,7 @@ const NewProjectModal: React.FC<NewProjectModalProps> = ({ open, onOpenChange })
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-white">Date limite *</Label>
                 <Popover>

@@ -12,7 +12,7 @@ const TimerPage = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Timer de Projet</h1>
-            <p className="text-purple-200">Suivez le temps passé sur vos projets</p>
+            <p className="text-white/50">Suivez le temps passé sur vos projets</p>
           </div>
         </div>
 

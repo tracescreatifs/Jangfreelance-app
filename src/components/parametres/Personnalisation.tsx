@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Palette, Moon, Sun, Monitor, Eye, Brush, Layout } from 'lucide-react';
+import { Palette, Moon, Sun, Monitor, Eye, Layout } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Switch } from '../ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Input } from '../ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
 
@@ -18,9 +17,6 @@ const Personnalisation = () => {
 
   const defaultPrefs = {
     theme: 'dark',
-    accentColor: 'purple',
-    primaryColor: '#8B5CF6',
-    secondaryColor: '#3B82F6',
     fontSize: 'medium',
     compactMode: false,
     animationsEnabled: true,
@@ -57,7 +53,6 @@ const Personnalisation = () => {
         ...defaultPrefs,
         ...localPrefs,
         theme: savedPrefs.theme || 'dark',
-        primaryColor: savedPrefs.couleurPrincipale || '#8B5CF6',
       };
       setPreferences(newPrefs);
       setSavedState(newPrefs);
@@ -70,16 +65,6 @@ const Personnalisation = () => {
     { value: 'dark', label: 'Sombre', icon: Moon, description: 'Thème sombre (recommandé)' },
     { value: 'light', label: 'Clair', icon: Sun, description: 'Thème clair' },
     { value: 'auto', label: 'Automatique', icon: Monitor, description: 'Suit les préférences système' },
-  ];
-
-  const accentColors = [
-    { value: 'purple', label: 'Violet', color: 'bg-purple-500' },
-    { value: 'blue', label: 'Bleu', color: 'bg-blue-500' },
-    { value: 'green', label: 'Vert', color: 'bg-green-500' },
-    { value: 'orange', label: 'Orange', color: 'bg-orange-500' },
-    { value: 'pink', label: 'Rose', color: 'bg-pink-500' },
-    { value: 'indigo', label: 'Indigo', color: 'bg-indigo-500' },
-    { value: 'custom', label: 'Personnalisé', color: 'bg-gradient-to-r from-purple-500 to-blue-500' },
   ];
 
   const fontSizes = [
@@ -115,24 +100,6 @@ const Personnalisation = () => {
         html.classList.remove('dark');
         html.classList.add('light');
       }
-    }
-
-    // Appliquer les couleurs personnalisées
-    if (prefs.accentColor === 'custom') {
-      html.style.setProperty('--primary-color', prefs.primaryColor);
-      html.style.setProperty('--secondary-color', prefs.secondaryColor);
-      
-      // Mettre à jour les gradients avec les couleurs personnalisées
-      const elements = document.querySelectorAll('.glass-morphism');
-      elements.forEach(el => {
-        if (el instanceof HTMLElement) {
-          el.style.background = `linear-gradient(135deg, ${prefs.primaryColor}20, ${prefs.secondaryColor}20)`;
-        }
-      });
-    } else {
-      // Réinitialiser les couleurs personnalisées
-      html.style.removeProperty('--primary-color');
-      html.style.removeProperty('--secondary-color');
     }
 
     // Appliquer la taille de police
@@ -179,7 +146,6 @@ const Personnalisation = () => {
       // Sauvegarder dans Supabase
       await updatePreferences({
         theme: preferences.theme,
-        couleurPrincipale: preferences.primaryColor,
       });
 
       // Aussi en localStorage pour persistance rapide
@@ -249,7 +215,7 @@ const Personnalisation = () => {
             <CardContent className="space-y-6">
               <div>
                 <Label className="text-white font-medium mb-3 block">Thème</Label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {themes.map((theme) => (
                     <button
                       key={theme.value}
@@ -267,69 +233,6 @@ const Personnalisation = () => {
                   ))}
                 </div>
               </div>
-
-              <div>
-                <Label className="text-white font-medium mb-3 block">Couleur d'accent</Label>
-                <div className="grid grid-cols-7 gap-3">
-                  {accentColors.map((color) => (
-                    <button
-                      key={color.value}
-                      onClick={() => handlePreferenceChange('accentColor', color.value)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        preferences.accentColor === color.value
-                          ? 'border-white'
-                          : 'border-white/20 hover:border-white/40'
-                      }`}
-                    >
-                      <div className={`w-6 h-6 rounded-full ${color.color} mx-auto mb-1`}></div>
-                      <p className="text-white text-sm">{color.label}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {preferences.accentColor === 'custom' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-white font-medium mb-2 block">Couleur Primaire</Label>
-                    <div className="flex items-center space-x-3">
-                      <Input
-                        type="color"
-                        value={preferences.primaryColor}
-                        onChange={(e) => handlePreferenceChange('primaryColor', e.target.value)}
-                        className="w-12 h-10 p-1 bg-white/10 border-white/20"
-                      />
-                      <Input
-                        type="text"
-                        value={preferences.primaryColor}
-                        onChange={(e) => handlePreferenceChange('primaryColor', e.target.value)}
-                        className="bg-white/10 border-white/20 text-white"
-                        placeholder="#8B5CF6"
-                        pattern="^#[A-Fa-f0-9]{6}$"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-white font-medium mb-2 block">Couleur Secondaire</Label>
-                    <div className="flex items-center space-x-3">
-                      <Input
-                        type="color"
-                        value={preferences.secondaryColor}
-                        onChange={(e) => handlePreferenceChange('secondaryColor', e.target.value)}
-                        className="w-12 h-10 p-1 bg-white/10 border-white/20"
-                      />
-                      <Input
-                        type="text"
-                        value={preferences.secondaryColor}
-                        onChange={(e) => handlePreferenceChange('secondaryColor', e.target.value)}
-                        className="bg-white/10 border-white/20 text-white"
-                        placeholder="#3B82F6"
-                        pattern="^#[A-Fa-f0-9]{6}$"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div>
                 <Label className="text-white font-medium mb-3 block">Taille de police</Label>
@@ -429,7 +332,7 @@ const Personnalisation = () => {
           <Card className="glass-morphism border-white/20">
             <CardHeader>
               <CardTitle className="text-white flex items-center text-base sm:text-lg">
-                <Brush className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Aperçu
               </CardTitle>
               <CardDescription className="text-purple-200">
@@ -439,19 +342,10 @@ const Personnalisation = () => {
             <CardContent>
               <div className="bg-white/5 p-4 sm:p-6 rounded-lg border border-white/10">
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-white">Exemple de texte</span>
-                    <div 
-                      className="w-4 h-4 rounded"
-                      style={{ backgroundColor: preferences.accentColor === 'custom' ? preferences.primaryColor : undefined }}
-                    ></div>
-                  </div>
+                  <span className="text-white">Exemple de texte</span>
                   {preferences.showProgressBars && (
                     <div className="w-full bg-white/10 rounded-full h-2">
-                      <div 
-                        className="h-2 rounded-full w-3/4"
-                        style={{ backgroundColor: preferences.accentColor === 'custom' ? preferences.primaryColor : undefined }}
-                      ></div>
+                      <div className="h-2 rounded-full w-3/4 bg-gradient-to-r from-purple-500 to-blue-500"></div>
                     </div>
                   )}
                   <div className={`text-purple-200 ${preferences.fontSize === 'small' ? 'text-sm' : preferences.fontSize === 'large' ? 'text-lg' : 'text-base'}`}>

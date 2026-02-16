@@ -20,7 +20,7 @@ import { Invoice } from '../hooks/useInvoices';
 const Factures = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { invoices, updateInvoice, deleteInvoice, transformToInvoice, updateStatus } = useInvoices();
+  const { invoices, updateInvoice, deleteInvoice, transformToInvoice, updateStatus, refreshInvoices } = useInvoices();
   
   const [isNewInvoiceModalOpen, setIsNewInvoiceModalOpen] = useState(false);
   const [isEditInvoiceModalOpen, setIsEditInvoiceModalOpen] = useState(false);
@@ -126,18 +126,43 @@ const Factures = () => {
   };
 
   const canDelete = (invoice: Invoice) => {
-    return invoice.status === 'Brouillon';
+    // Suppression possible pour tout sauf les factures payées (comptabilité)
+    return invoice.status !== 'Payé';
   };
 
   const canSendEmail = (invoice: Invoice) => {
     return invoice.status === 'Brouillon' || invoice.status === 'Validé';
   };
 
+  const getAvailableStatuses = (invoice: Invoice): Invoice['status'][] => {
+    if (invoice.type === 'devis') {
+      return ['Brouillon', 'Envoyé', 'Validé'];
+    }
+    // facture
+    return ['Brouillon', 'Envoyé', 'Payé', 'En retard'];
+  };
+
+  const handleStatusChange = async (invoice: Invoice, newStatus: Invoice['status']) => {
+    if (newStatus === invoice.status) return;
+    await updateStatus(invoice.id, newStatus);
+    toast({
+      title: "Statut mis à jour",
+      description: `${invoice.type === 'devis' ? 'Devis' : 'Facture'} ${invoice.number} → ${newStatus}`,
+    });
+  };
+
   // Statistiques
   const stats = {
     totalDevis: invoices.filter(i => i.type === 'devis').length,
     totalFactures: invoices.filter(i => i.type === 'facture').length,
-    totalMontant: invoices.reduce((sum, i) => sum + i.total, 0),
+    // CA = uniquement les factures PAYÉES
+    caEncaisse: invoices
+      .filter(i => i.type === 'facture' && i.status === 'Payé')
+      .reduce((sum, i) => sum + i.total, 0),
+    // Montant en attente = factures envoyées non payées
+    enAttenteEncaissement: invoices
+      .filter(i => i.type === 'facture' && (i.status === 'Envoyé' || i.status === 'En retard'))
+      .reduce((sum, i) => sum + i.total, 0),
     enRetard: invoices.filter(i => i.status === 'En retard').length,
     enAttente: invoices.filter(i => i.status === 'Envoyé').length,
     payes: invoices.filter(i => i.status === 'Payé').length
@@ -151,7 +176,7 @@ const Factures = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Factures & Devis</h1>
-            <p className="text-purple-200">Gérez vos documents de facturation</p>
+            <p className="text-white/50">Gérez vos documents de facturation</p>
           </div>
           
           <Button 
@@ -167,40 +192,42 @@ const Factures = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6 sm:mb-8">
           <div className="glass-morphism p-4 rounded-xl text-center">
             <div className="flex items-center justify-center mb-2">
-              <FileText className="w-5 h-5 text-purple-300 mr-2" />
+              <FileText className="w-5 h-5 text-white/40 mr-2" />
               <span className="text-2xl font-bold text-white">{stats.totalDevis}</span>
             </div>
-            <div className="text-purple-200 text-sm">Devis</div>
+            <div className="text-white/50 text-sm">Devis</div>
           </div>
-          
+
           <div className="glass-morphism p-4 rounded-xl text-center">
             <div className="flex items-center justify-center mb-2">
-              <Receipt className="w-5 h-5 text-purple-300 mr-2" />
+              <Receipt className="w-5 h-5 text-white/40 mr-2" />
               <span className="text-2xl font-bold text-white">{stats.totalFactures}</span>
             </div>
-            <div className="text-purple-200 text-sm">Factures</div>
+            <div className="text-white/50 text-sm">Factures</div>
           </div>
-          
+
           <div className="glass-morphism p-4 rounded-xl text-center">
             <div className="text-lg font-bold text-green-400 mb-1">
-              {formatCurrency(stats.totalMontant)}
+              {formatCurrency(stats.caEncaisse)}
             </div>
-            <div className="text-purple-200 text-sm">CA Total</div>
+            <div className="text-white/50 text-sm">CA Encaissé</div>
           </div>
-          
+
           <div className="glass-morphism p-4 rounded-xl text-center">
-            <div className="text-2xl font-bold text-yellow-400 mb-1">{stats.enAttente}</div>
-            <div className="text-purple-200 text-sm">En attente</div>
+            <div className="text-lg font-bold text-yellow-400 mb-1">
+              {formatCurrency(stats.enAttenteEncaissement)}
+            </div>
+            <div className="text-white/50 text-sm">En attente</div>
           </div>
-          
+
           <div className="glass-morphism p-4 rounded-xl text-center">
             <div className="text-2xl font-bold text-green-400 mb-1">{stats.payes}</div>
-            <div className="text-purple-200 text-sm">Payés</div>
+            <div className="text-white/50 text-sm">Payés</div>
           </div>
-          
+
           <div className="glass-morphism p-4 rounded-xl text-center">
             <div className="text-2xl font-bold text-red-400 mb-1">{stats.enRetard}</div>
-            <div className="text-purple-200 text-sm">En retard</div>
+            <div className="text-white/50 text-sm">En retard</div>
           </div>
         </div>
 
@@ -209,12 +236,12 @@ const Factures = () => {
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40 w-5 h-5" />
                 <Input
                   placeholder="Rechercher par titre, client ou numéro..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-white/10 border-white/20 text-white placeholder-purple-200"
+                  className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/40"
                 />
               </div>
             </div>
@@ -249,11 +276,11 @@ const Factures = () => {
         {/* Message si aucun document */}
         {filteredInvoices.length === 0 ? (
           <div className="glass-morphism p-8 rounded-2xl text-center">
-            <FileText className="w-16 h-16 text-purple-300 mx-auto mb-4" />
+            <FileText className="w-16 h-16 text-white/40 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">
               {invoices.length === 0 ? 'Aucun document créé' : 'Aucun résultat trouvé'}
             </h3>
-            <p className="text-purple-200 mb-6">
+            <p className="text-white/50 mb-6">
               {invoices.length === 0 
                 ? 'Commencez par créer votre premier devis ou facture'
                 : 'Essayez de modifier vos critères de recherche'
@@ -274,14 +301,14 @@ const Factures = () => {
             <Table>
               <TableHeader>
                 <TableRow className="border-white/10 hover:bg-white/5">
-                  <TableHead className="text-purple-200 font-semibold">Numéro</TableHead>
-                  <TableHead className="text-purple-200 font-semibold">Type</TableHead>
-                  <TableHead className="text-purple-200 font-semibold">Titre</TableHead>
-                  <TableHead className="text-purple-200 font-semibold">Client</TableHead>
-                  <TableHead className="text-purple-200 font-semibold">Statut</TableHead>
-                  <TableHead className="text-purple-200 font-semibold">Montant</TableHead>
-                  <TableHead className="text-purple-200 font-semibold">Date</TableHead>
-                  <TableHead className="text-purple-200 font-semibold">Actions</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Numéro</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Type</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Titre</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Client</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Statut</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Montant</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Date</TableHead>
+                  <TableHead className="text-white/50 font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -296,9 +323,26 @@ const Factures = () => {
                     <TableCell className="font-medium">{invoice.title}</TableCell>
                     <TableCell>{invoice.clientName}</TableCell>
                     <TableCell>
-                      <Badge className={`${statusColors[invoice.status]} text-white`}>
-                        {invoice.status}
-                      </Badge>
+                      <Select
+                        value={invoice.status}
+                        onValueChange={(value) => handleStatusChange(invoice, value as Invoice['status'])}
+                      >
+                        <SelectTrigger className="w-auto border-0 bg-transparent p-0 h-auto focus:ring-0 focus:ring-offset-0">
+                          <Badge className={`${statusColors[invoice.status]} text-white cursor-pointer hover:opacity-80 transition-opacity`}>
+                            {invoice.status}
+                          </Badge>
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-900 border-gray-700">
+                          {getAvailableStatuses(invoice).map((status) => (
+                            <SelectItem key={status} value={status} className="text-white">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${statusColors[status]}`} />
+                                {status}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell className="font-medium text-green-300">{formatCurrency(invoice.total)}</TableCell>
                     <TableCell>{new Date(invoice.createdAt).toLocaleDateString('fr-FR')}</TableCell>
@@ -418,6 +462,7 @@ const Factures = () => {
         <NewInvoiceModal
           open={isNewInvoiceModalOpen}
           onOpenChange={setIsNewInvoiceModalOpen}
+          onInvoiceCreated={() => refreshInvoices()}
         />
 
         <EditInvoiceModal

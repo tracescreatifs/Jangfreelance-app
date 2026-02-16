@@ -65,6 +65,7 @@ export const useTransactions = () => {
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
+      .is('deleted_at', null)
       .order('date', { ascending: false });
 
     if (error) {
@@ -140,7 +141,7 @@ export const useTransactions = () => {
   const deleteTransaction = async (id: string) => {
     const { error } = await supabase
       .from('transactions')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

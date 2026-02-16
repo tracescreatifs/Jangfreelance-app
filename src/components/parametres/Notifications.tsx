@@ -1,27 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Mail, MessageSquare, Calendar, DollarSign, Users, Clock, AlertTriangle } from 'lucide-react';
+import { Bell, MessageSquare, Calendar, DollarSign, Users, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { useUserPreferences } from '../../hooks/useUserPreferences';
-import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/use-toast';
 
 const Notifications = () => {
   const { preferences: savedPrefs, loading, updatePreferences } = useUserPreferences();
-  const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   const defaultPreferences = {
-    browserNotifications: true,
-    desktopNotifications: false,
-    emailNotifications: true,
-    emailFrequency: 'instant',
+    appNotifications: true,
     newProject: true,
     projectDeadline: true,
     invoiceOverdue: true,
@@ -32,9 +26,6 @@ const Notifications = () => {
     quietStart: '22:00',
     quietEnd: '08:00',
     weekendNotifications: false,
-    emailEnabled: true,
-    smsEnabled: false,
-    pushEnabled: true,
   };
 
   const [preferences, setPreferences] = useState(defaultPreferences);
@@ -44,9 +35,7 @@ const Notifications = () => {
     if (savedPrefs) {
       const loaded = {
         ...defaultPreferences,
-        emailNotifications: savedPrefs.notificationsEmail,
-        emailEnabled: savedPrefs.notificationsEmail,
-        pushEnabled: savedPrefs.notificationsPush,
+        appNotifications: savedPrefs.notificationsPush,
         invoiceOverdue: savedPrefs.notificationsRappels,
         paymentReceived: savedPrefs.notificationsPayment,
         newProject: savedPrefs.notificationsNewClient,
@@ -66,14 +55,6 @@ const Notifications = () => {
     setPreferences(savedState);
     setHasChanges(false);
   };
-
-  const emailFrequencies = [
-    { value: 'instant', label: 'Instantané' },
-    { value: 'hourly', label: 'Toutes les heures' },
-    { value: 'daily', label: 'Quotidien' },
-    { value: 'weekly', label: 'Hebdomadaire' },
-    { value: 'never', label: 'Jamais' },
-  ];
 
   const notificationTypes = [
     {
@@ -124,8 +105,7 @@ const Notifications = () => {
     setIsSaving(true);
     try {
       await updatePreferences({
-        notificationsEmail: preferences.emailNotifications,
-        notificationsPush: preferences.pushEnabled,
+        notificationsPush: preferences.appNotifications,
         notificationsRappels: preferences.invoiceOverdue,
         notificationsPayment: preferences.paymentReceived,
         notificationsNewClient: preferences.newProject,
@@ -197,83 +177,32 @@ const Notifications = () => {
         </div>
 
         <div className="space-y-8">
-          {/* Canaux de notification */}
+          {/* Notifications in-app */}
           <Card className="glass-morphism border-white/20">
             <CardHeader>
-              <CardTitle className="text-white">Canaux de notification</CardTitle>
+              <CardTitle className="text-white">Notifications de l'application</CardTitle>
               <CardDescription className="text-purple-200">
-                Choisissez comment recevoir vos notifications
+                Recevez vos notifications directement dans Jang
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Mail className="w-5 h-5 text-blue-400" />
-                    <div>
-                      <Label className="text-white font-medium">Email</Label>
-                      <p className="text-purple-200 text-sm">{user?.email || 'Non configuré'}</p>
-                    </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Bell className="w-5 h-5 text-purple-400" />
+                  <div>
+                    <Label className="text-white font-medium">Notifications dans l'application</Label>
+                    <p className="text-purple-200 text-sm">Alertes et rappels via le navigateur</p>
                   </div>
-                  <Switch
-                    checked={preferences.emailEnabled}
-                    onCheckedChange={(checked) => handlePreferenceChange('emailEnabled', checked)}
-                  />
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <MessageSquare className="w-5 h-5 text-green-400" />
-                    <div>
-                      <Label className="text-white font-medium">SMS</Label>
-                      <p className="text-purple-200 text-sm">+221 77 *** **67</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={preferences.smsEnabled}
-                    onCheckedChange={(checked) => handlePreferenceChange('smsEnabled', checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Bell className="w-5 h-5 text-purple-400" />
-                    <div>
-                      <Label className="text-white font-medium">Push</Label>
-                      <p className="text-purple-200 text-sm">Navigateur</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={preferences.pushEnabled}
-                    onCheckedChange={(checked) => handlePreferenceChange('pushEnabled', checked)}
-                  />
-                </div>
+                <Switch
+                  checked={preferences.appNotifications}
+                  onCheckedChange={(checked) => handlePreferenceChange('appNotifications', checked)}
+                />
               </div>
 
-              {preferences.emailEnabled && (
-                <div>
-                  <Label className="text-white font-medium">Fréquence des emails</Label>
-                  <Select 
-                    value={preferences.emailFrequency} 
-                    onValueChange={(value) => handlePreferenceChange('emailFrequency', value)}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-800 border-gray-600">
-                      {emailFrequencies.map((freq) => (
-                        <SelectItem key={freq.value} value={freq.value} className="text-white hover:bg-gray-700">
-                          {freq.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <Button 
+              <Button
                 onClick={testNotification}
-                variant="outline" 
+                variant="outline"
                 className="border-white/20 text-white hover:bg-white/10"
               >
                 Tester les notifications
@@ -334,7 +263,7 @@ const Notifications = () => {
               </div>
 
               {preferences.quietHours && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-white font-medium">Début</Label>
                     <input

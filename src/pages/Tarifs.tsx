@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Crown, Zap, Building2, ArrowRight } from 'lucide-react';
+import { Check, Crown, Zap, ArrowRight } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -44,8 +44,6 @@ const Tarifs = () => {
         return <Zap className="w-8 h-8" />;
       case 'pro':
         return <Crown className="w-8 h-8" />;
-      case 'business':
-        return <Building2 className="w-8 h-8" />;
       default:
         return <Zap className="w-8 h-8" />;
     }
@@ -57,8 +55,6 @@ const Tarifs = () => {
         return 'from-gray-500 to-gray-600';
       case 'pro':
         return 'from-purple-500 to-blue-500';
-      case 'business':
-        return 'from-amber-500 to-orange-500';
       default:
         return 'from-gray-500 to-gray-600';
     }
@@ -125,8 +121,8 @@ const Tarifs = () => {
         </div>
 
         {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {plans.map((plan) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {plans.filter(p => p.slug !== 'business').map((plan) => (
             <div
               key={plan.id}
               className={`glass-morphism rounded-2xl p-6 relative ${
@@ -216,20 +212,16 @@ const Tarifs = () => {
           <h3 className="text-xl font-semibold text-white mb-6">Moyens de paiement acceptés</h3>
           <div className="flex flex-wrap justify-center gap-4">
             <div className="glass-morphism px-6 py-3 rounded-lg flex items-center space-x-2">
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">OM</div>
-              <span className="text-white">Orange Money</span>
-            </div>
-            <div className="glass-morphism px-6 py-3 rounded-lg flex items-center space-x-2">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">W</div>
               <span className="text-white">Wave</span>
             </div>
             <div className="glass-morphism px-6 py-3 rounded-lg flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">FM</div>
-              <span className="text-white">Free Money</span>
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">OM</div>
+              <span className="text-white">Orange Money</span>
             </div>
             <div className="glass-morphism px-6 py-3 rounded-lg flex items-center space-x-2">
-              <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-xs">MTN</div>
-              <span className="text-white">MTN MoMo</span>
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">YAS</div>
+              <span className="text-white">YAS (ex Free Money)</span>
             </div>
           </div>
           <p className="text-purple-300 mt-4 text-sm">

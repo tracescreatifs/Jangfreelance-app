@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Button } from '../components/ui/button';
@@ -11,11 +11,15 @@ import { Badge } from '../components/ui/badge';
 import { Textarea } from '../components/ui/textarea';
 import { useClients, ClientLegacy } from '../hooks/useClients';
 import NewClientModal from '../components/modals/NewClientModal';
+import { useInvoices } from '../hooks/useInvoices';
+import { useProjects } from '../hooks/useProjects';
 import { toast } from '../components/ui/use-toast';
 
 const Clients = () => {
   const navigate = useNavigate();
   const { clients, updateClient, deleteClient } = useClients();
+  const { invoices } = useInvoices();
+  const { projects } = useProjects();
   const [selectedClient, setSelectedClient] = useState<ClientLegacy | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -35,6 +39,43 @@ const Clients = () => {
       minimumFractionDigits: 0
     }).format(amount);
   };
+
+  // Extraire le nom du client depuis le format "Nom - Entreprise" des projets
+  const extractName = (fullClientName: string) =>
+    fullClientName.split(' - ')[0].toLowerCase().trim();
+
+  // Calculer CA, nombre de projets et statut en temps réel
+  const clientComputedData = useMemo(() => {
+    const map = new Map<string, { totalRevenue: number; projectCount: number; status: 'Actif' | 'Inactif' | 'Prospect' }>();
+
+    const paidInvoices = invoices.filter(inv => inv.type === 'facture' && inv.status === 'Payé');
+
+    clients.forEach(client => {
+      const clientNameLower = client.name.toLowerCase().trim();
+
+      // CA = somme des factures payées de ce client
+      const clientPaidInvoices = paidInvoices.filter(inv =>
+        inv.clientName.toLowerCase().trim() === clientNameLower
+      );
+      const totalRevenue = clientPaidInvoices.reduce((sum, inv) => sum + inv.total, 0);
+
+      // Nombre de projets de ce client
+      const clientProjects = projects.filter(p =>
+        extractName(p.clientName) === clientNameLower
+      );
+      const projectCount = clientProjects.length;
+
+      // Statut auto : a des projets ou factures payées → Actif
+      let status = client.status;
+      if (totalRevenue > 0 || clientProjects.length > 0) {
+        status = 'Actif';
+      }
+
+      map.set(client.id, { totalRevenue, projectCount, status });
+    });
+
+    return map;
+  }, [clients, invoices, projects]);
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -201,17 +242,22 @@ const Clients = () => {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="text-center">
-                        <div className="text-lg font-bold">{client.projects}</div>
+                        <div className="text-lg font-bold">{clientComputedData.get(client.id)?.projectCount || 0}</div>
                         <div className="text-sm text-purple-300">projets</div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
-                      <div className="font-semibold">{formatCurrency(client.totalRevenue)}</div>
+                      <div className="font-semibold">{formatCurrency(clientComputedData.get(client.id)?.totalRevenue || 0)}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${statusColors[client.status]} text-white text-xs`}>
-                        {client.status}
-                      </Badge>
+                      {(() => {
+                        const computedStatus = clientComputedData.get(client.id)?.status || client.status;
+                        return (
+                          <Badge className={`${statusColors[computedStatus]} text-white text-xs`}>
+                            {computedStatus}
+                          </Badge>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-1">
@@ -428,25 +474,25 @@ Cordialement,`}
         {/* Statistiques */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-6 sm:mt-8">
           <div className="glass-morphism p-4 sm:p-6 rounded-2xl text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-green-400 mb-2">{clients.filter(c => c.status === 'Actif').length}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-green-400 mb-2">{clients.filter(c => clientComputedData.get(c.id)?.status === 'Actif').length}</div>
             <div className="text-purple-200 text-sm sm:text-base">Clients actifs</div>
           </div>
 
           <div className="glass-morphism p-4 sm:p-6 rounded-2xl text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2">{clients.filter(c => c.status === 'Prospect').length}</div>
+            <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2">{clients.filter(c => (clientComputedData.get(c.id)?.status || c.status) === 'Prospect').length}</div>
             <div className="text-purple-200 text-sm sm:text-base">Prospects</div>
           </div>
 
           <div className="glass-morphism p-4 sm:p-6 rounded-2xl text-center col-span-2 lg:col-span-1">
             <div className="text-lg sm:text-2xl lg:text-3xl font-bold text-purple-400 mb-2">
-              {formatCurrency(clients.reduce((sum, c) => sum + c.totalRevenue, 0))}
+              {formatCurrency(clients.reduce((sum, c) => sum + (clientComputedData.get(c.id)?.totalRevenue || 0), 0))}
             </div>
             <div className="text-purple-200 text-sm sm:text-base">CA Total</div>
           </div>
 
           <div className="glass-morphism p-4 sm:p-6 rounded-2xl text-center col-span-2 lg:col-span-1">
             <div className="text-2xl sm:text-3xl font-bold text-orange-400 mb-2">
-              {clients.reduce((sum, c) => sum + c.projects, 0)}
+              {clients.reduce((sum, c) => sum + (clientComputedData.get(c.id)?.projectCount || 0), 0)}
             </div>
             <div className="text-purple-200 text-sm sm:text-base">Projets totaux</div>
           </div>

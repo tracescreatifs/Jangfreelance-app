@@ -125,6 +125,7 @@ export const useInvoices = () => {
     const { data: invoiceRows, error: invError } = await supabase
       .from('invoices')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (invError) {
@@ -300,10 +301,9 @@ export const useInvoices = () => {
   // ── Delete ──────────────────────────────────────────────────────────
 
   const deleteInvoice = async (id: string) => {
-    // Les items sont supprimés automatiquement (ON DELETE CASCADE)
     const { error } = await supabase
       .from('invoices')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

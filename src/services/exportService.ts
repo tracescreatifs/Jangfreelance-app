@@ -32,7 +32,7 @@ const formatDate = (dateString: string): string => {
 };
 
 // ============================================
-// EXPORT PDF - FACTURE INDIVIDUELLE
+// EXPORT PDF - FACTURE / DEVIS — DESIGN ÉPURÉ N&B
 // ============================================
 export const exportInvoiceToPDF = (
   invoice: Invoice,
@@ -41,70 +41,120 @@ export const exportInvoiceToPDF = (
 ): void => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
 
-  // En-tête avec logo/nom de l'entreprise
-  doc.setFontSize(24);
-  doc.setTextColor(100, 50, 150);
-  doc.text(professionalProfile?.nomEntreprise || 'Mon Entreprise', 20, 25);
+  // ---- COULEURS N&B ----
+  const black = [20, 20, 20];
+  const darkGray = [60, 60, 60];
+  const mediumGray = [120, 120, 120];
+  const lightGray = [200, 200, 200];
+  const bgLight = [245, 245, 245];
 
-  // Sous-titre
-  doc.setFontSize(10);
-  doc.setTextColor(100, 100, 100);
-  doc.text(professionalProfile?.secteurActivite || '', 20, 32);
+  // ---- EN-TÊTE ----
+  // Nom entreprise (gauche)
+  doc.setFontSize(22);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...black);
+  doc.text(professionalProfile?.nomEntreprise || 'Mon Entreprise', margin, 28);
 
-  // Type de document (FACTURE ou DEVIS)
-  doc.setFontSize(28);
-  doc.setTextColor(50, 50, 50);
+  // Secteur (sous le nom)
+  if (professionalProfile?.secteurActivite) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...mediumGray);
+    doc.text(professionalProfile.secteurActivite, margin, 35);
+  }
+
+  // Type document (droite, grand)
   const docType = invoice.type === 'facture' ? 'FACTURE' : 'DEVIS';
-  doc.text(docType, pageWidth - 20, 25, { align: 'right' });
+  doc.setFontSize(28);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...black);
+  doc.text(docType, pageWidth - margin, 28, { align: 'right' });
 
-  // Numéro
-  doc.setFontSize(12);
-  doc.text(`N° ${invoice.number}`, pageWidth - 20, 35, { align: 'right' });
-
-  // Ligne de séparation
-  doc.setDrawColor(200, 200, 200);
-  doc.line(20, 45, pageWidth - 20, 45);
-
-  // Informations de l'émetteur (gauche)
-  doc.setFontSize(10);
-  doc.setTextColor(80, 80, 80);
-  doc.text('DE:', 20, 55);
-  doc.setTextColor(0, 0, 0);
+  // Numéro (droite, sous le type)
   doc.setFontSize(11);
-  doc.text(userProfile?.nom || 'Votre nom', 20, 62);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...mediumGray);
+  doc.text(`N° ${invoice.number}`, pageWidth - margin, 36, { align: 'right' });
+
+  // Ligne de séparation fine
+  doc.setDrawColor(...lightGray);
+  doc.setLineWidth(0.5);
+  doc.line(margin, 42, pageWidth - margin, 42);
+
+  // ---- INFORMATIONS ÉMETTEUR / CLIENT ----
+  let yPos = 52;
+
+  // Émetteur (gauche)
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...mediumGray);
+  doc.text('DE', margin, yPos);
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...black);
+  doc.text(userProfile?.nom || 'Votre nom', margin, yPos + 7);
+
   doc.setFontSize(9);
-  doc.text(professionalProfile?.adresse || '', 20, 68);
-  doc.text(`${professionalProfile?.codePostal || ''} ${professionalProfile?.ville || ''}`, 20, 74);
-  doc.text(professionalProfile?.telephone || '', 20, 80);
-  doc.text(professionalProfile?.emailPro || '', 20, 86);
-
-  // SIRET / NINEA
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...darkGray);
+  let emitterY = yPos + 14;
+  if (professionalProfile?.adresse) {
+    doc.text(professionalProfile.adresse, margin, emitterY);
+    emitterY += 5;
+  }
+  const cityLine = [professionalProfile?.codePostal, professionalProfile?.ville].filter(Boolean).join(' ');
+  if (cityLine) {
+    doc.text(cityLine, margin, emitterY);
+    emitterY += 5;
+  }
+  if (professionalProfile?.telephone) {
+    doc.text(professionalProfile.telephone, margin, emitterY);
+    emitterY += 5;
+  }
+  if (professionalProfile?.emailPro) {
+    doc.text(professionalProfile.emailPro, margin, emitterY);
+    emitterY += 5;
+  }
   if (professionalProfile?.siret) {
-    doc.text(`NINEA: ${professionalProfile.siret}`, 20, 92);
+    doc.setTextColor(...mediumGray);
+    doc.text(`NINEA: ${professionalProfile.siret}`, margin, emitterY);
   }
 
-  // Informations du client (droite)
-  doc.setFontSize(10);
-  doc.setTextColor(80, 80, 80);
-  doc.text('POUR:', pageWidth - 80, 55);
-  doc.setTextColor(0, 0, 0);
+  // Client (droite)
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...mediumGray);
+  doc.text('POUR', pageWidth - margin - 70, yPos);
+
   doc.setFontSize(11);
-  doc.text(invoice.clientName, pageWidth - 80, 62);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...black);
+  doc.text(invoice.clientName, pageWidth - margin - 70, yPos + 7);
 
-  // Dates
-  doc.setFontSize(10);
-  doc.text(`Date: ${formatDate(invoice.date)}`, pageWidth - 80, 75);
+  // Dates (droite, sous le client)
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...darkGray);
+  doc.text(`Date: ${formatDate(invoice.date)}`, pageWidth - margin - 70, yPos + 18);
   if (invoice.dueDate) {
-    doc.text(`Échéance: ${formatDate(invoice.dueDate)}`, pageWidth - 80, 82);
+    doc.text(`Échéance: ${formatDate(invoice.dueDate)}`, pageWidth - margin - 70, yPos + 24);
   }
 
-  // Titre du projet
-  doc.setFontSize(12);
-  doc.setTextColor(100, 50, 150);
-  doc.text(`Objet: ${invoice.title}`, 20, 110);
+  // ---- OBJET ----
+  yPos = 100;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...black);
+  doc.text('Objet:', margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  doc.text(invoice.title, margin + 18, yPos);
 
-  // Tableau des articles
+  // ---- TABLEAU DES PRESTATIONS ----
   const tableData = invoice.items.map(item => [
     item.description,
     item.quantity.toString(),
@@ -113,71 +163,120 @@ export const exportInvoiceToPDF = (
   ]);
 
   autoTable(doc, {
-    startY: 120,
+    startY: yPos + 8,
     head: [['Description', 'Qté', 'Prix unitaire', 'Total']],
     body: tableData,
-    theme: 'striped',
+    theme: 'plain',
     headStyles: {
-      fillColor: [100, 50, 150],
-      textColor: 255,
-      fontStyle: 'bold'
+      fillColor: [20, 20, 20],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 9,
+      cellPadding: 6
     },
-    styles: {
-      fontSize: 10,
-      cellPadding: 5
+    bodyStyles: {
+      fontSize: 9,
+      cellPadding: 5,
+      textColor: [40, 40, 40]
+    },
+    alternateRowStyles: {
+      fillColor: [248, 248, 248]
     },
     columnStyles: {
-      0: { cellWidth: 80 },
-      1: { cellWidth: 25, halign: 'center' },
+      0: { cellWidth: 85 },
+      1: { cellWidth: 20, halign: 'center' },
       2: { cellWidth: 40, halign: 'right' },
-      3: { cellWidth: 40, halign: 'right' }
-    }
+      3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
+    },
+    styles: {
+      lineColor: [220, 220, 220],
+      lineWidth: 0.3
+    },
+    margin: { left: margin, right: margin }
   });
 
-  // Totaux
-  const finalY = doc.lastAutoTable.finalY + 10;
+  // ---- TOTAUX ----
+  const finalY = doc.lastAutoTable.finalY + 12;
+  const totalsX = pageWidth - margin - 80;
+
+  // Ligne séparatrice avant les totaux
+  doc.setDrawColor(...lightGray);
+  doc.setLineWidth(0.3);
+  doc.line(totalsX - 5, finalY - 5, pageWidth - margin, finalY - 5);
 
   // Sous-total
-  doc.setFontSize(10);
-  doc.text('Sous-total HT:', pageWidth - 80, finalY);
-  doc.text(formatCurrency(invoice.subtotal), pageWidth - 20, finalY, { align: 'right' });
-
-  // TVA
-  doc.text(`TVA (${invoice.taxRate}%):`, pageWidth - 80, finalY + 7);
-  doc.text(formatCurrency(invoice.taxAmount), pageWidth - 20, finalY + 7, { align: 'right' });
-
-  // Total TTC
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 50, 150);
-  doc.text('TOTAL TTC:', pageWidth - 80, finalY + 20);
-  doc.text(formatCurrency(invoice.total), pageWidth - 20, finalY + 20, { align: 'right' });
-
-  // Conditions de paiement
-  doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  const paymentNote = invoice.type === 'facture'
-    ? 'Paiement attendu sous 30 jours. Merci pour votre confiance.'
-    : 'Ce devis est valable 30 jours. Merci de votre confiance.';
-  doc.text(paymentNote, 20, finalY + 40);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...darkGray);
+  doc.text('Sous-total HT', totalsX, finalY);
+  doc.text(formatCurrency(invoice.subtotal), pageWidth - margin, finalY, { align: 'right' });
+
+  // Taxe
+  const taxLabel = invoice.taxRate > 0 ? `TVA (${invoice.taxRate}%)` : 'TVA (0%)';
+  doc.text(taxLabel, totalsX, finalY + 7);
+  doc.text(formatCurrency(invoice.taxAmount), pageWidth - margin, finalY + 7, { align: 'right' });
+
+  // Ligne avant total
+  doc.setDrawColor(...black);
+  doc.setLineWidth(0.8);
+  doc.line(totalsX - 5, finalY + 13, pageWidth - margin, finalY + 13);
+
+  // TOTAL TTC
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...black);
+  doc.text('TOTAL TTC', totalsX, finalY + 22);
+  doc.text(formatCurrency(invoice.total), pageWidth - margin, finalY + 22, { align: 'right' });
+
+  // ---- CONDITIONS ----
+  const conditionsY = finalY + 42;
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...mediumGray);
+
+  if (invoice.type === 'facture') {
+    doc.text('Conditions de paiement : Paiement à 30 jours.', margin, conditionsY);
+    doc.text('En cas de retard : pénalités de 3% par mois. Escompte de 2% si paiement à 8 jours.', margin, conditionsY + 5);
+  } else {
+    doc.text('Ce devis est valable 30 jours à compter de sa date d\'émission.', margin, conditionsY);
+    doc.text('Merci de retourner ce devis signé avec la mention "Bon pour accord".', margin, conditionsY + 5);
+  }
 
   // Notes
   if (invoice.notes) {
-    doc.text(`Notes: ${invoice.notes}`, 20, finalY + 50);
+    doc.setTextColor(...darkGray);
+    doc.text(`Note : ${invoice.notes}`, margin, conditionsY + 14);
   }
 
-  // Pied de page
-  doc.setFontSize(8);
-  doc.setTextColor(150, 150, 150);
-  doc.text(
-    `${professionalProfile?.nomEntreprise || ''} - ${professionalProfile?.formeJuridique || ''} - NINEA: ${professionalProfile?.siret || 'N/A'}`,
-    pageWidth / 2,
-    doc.internal.pageSize.getHeight() - 10,
-    { align: 'center' }
-  );
+  // ---- PIED DE PAGE ----
+  // Ligne fine
+  doc.setDrawColor(...lightGray);
+  doc.setLineWidth(0.3);
+  doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
 
-  // Sauvegarder
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...mediumGray);
+
+  const footerParts = [
+    professionalProfile?.nomEntreprise,
+    professionalProfile?.formeJuridique,
+    professionalProfile?.siret ? `NINEA: ${professionalProfile.siret}` : null
+  ].filter(Boolean).join('  ·  ');
+
+  doc.text(footerParts, pageWidth / 2, pageHeight - 12, { align: 'center' });
+
+  // Contact en footer
+  const contactParts = [
+    professionalProfile?.emailPro,
+    professionalProfile?.telephone
+  ].filter(Boolean).join('  ·  ');
+  if (contactParts) {
+    doc.text(contactParts, pageWidth / 2, pageHeight - 8, { align: 'center' });
+  }
+
+  // ---- SAUVEGARDE ----
   doc.save(`${invoice.type}_${invoice.number}.pdf`);
 };
 
@@ -195,11 +294,13 @@ export const exportFinancialReportToPDF = (
 
   // Titre
   doc.setFontSize(22);
-  doc.setTextColor(100, 50, 150);
+  doc.setTextColor(20, 20, 20);
+  doc.setFont('helvetica', 'bold');
   doc.text('RAPPORT FINANCIER', pageWidth / 2, 25, { align: 'center' });
 
   doc.setFontSize(12);
   doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'normal');
   doc.text(professionalProfile?.nomEntreprise || 'Mon Entreprise', pageWidth / 2, 35, { align: 'center' });
   doc.text(`Période: ${period}`, pageWidth / 2, 42, { align: 'center' });
 
@@ -225,7 +326,6 @@ export const exportFinancialReportToPDF = (
   doc.setDrawColor(200, 200, 200);
   doc.line(20, 63, pageWidth - 20, 63);
 
-  // Tableau résumé
   autoTable(doc, {
     startY: 70,
     head: [['Indicateur', 'Montant']],
@@ -237,7 +337,7 @@ export const exportFinancialReportToPDF = (
       ['Factures En Attente', `${facturesEnAttente.length} (${formatCurrency(facturesEnAttente.reduce((s, f) => s + f.total, 0))})`]
     ],
     theme: 'grid',
-    headStyles: { fillColor: [100, 50, 150] },
+    headStyles: { fillColor: [20, 20, 20] },
     columnStyles: {
       0: { cellWidth: 100 },
       1: { cellWidth: 70, halign: 'right' }
@@ -264,7 +364,7 @@ export const exportFinancialReportToPDF = (
     head: [['Date', 'Description', 'Catégorie', 'Recette', 'Dépense']],
     body: transactionData,
     theme: 'striped',
-    headStyles: { fillColor: [100, 50, 150] },
+    headStyles: { fillColor: [20, 20, 20] },
     styles: { fontSize: 8 }
   });
 
@@ -303,7 +403,6 @@ export const exportClientsToExcel = (clients: ClientLegacy[]): void => {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Clients');
 
-  // Ajuster la largeur des colonnes
   const colWidths = [
     { wch: 25 }, { wch: 30 }, { wch: 15 }, { wch: 25 },
     { wch: 30 }, { wch: 15 }, { wch: 12 }, { wch: 10 },
@@ -352,34 +451,43 @@ export const exportProjectsToExcel = (projects: any[]): void => {
 // EXPORT EXCEL - FACTURES
 // ============================================
 export const exportInvoicesToExcel = (invoices: Invoice[]): void => {
-  const data = invoices.map(invoice => ({
+  const workbook = XLSX.utils.book_new();
+
+  const colWidths = [
+    { wch: 15 }, { wch: 30 }, { wch: 25 },
+    { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 },
+    { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 30 }
+  ];
+
+  const toRow = (invoice: Invoice) => ({
     'Numéro': invoice.number,
-    'Type': invoice.type === 'facture' ? 'Facture' : 'Devis',
     'Titre': invoice.title,
     'Client': invoice.clientName,
     'Statut': invoice.status,
-    'Date': formatDate(invoice.date),
+    'Date': formatDate(invoice.createdAt),
     'Échéance': invoice.dueDate ? formatDate(invoice.dueDate) : '',
     'Sous-total HT (XOF)': invoice.subtotal,
     'TVA (%)': invoice.taxRate,
     'Montant TVA (XOF)': invoice.taxAmount,
     'Total TTC (XOF)': invoice.total,
     'Notes': invoice.notes || ''
-  }));
+  });
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Factures');
+  // Classeur 1 : Factures
+  const factures = invoices.filter(i => i.type === 'facture');
+  const facturesSheet = XLSX.utils.json_to_sheet(factures.map(toRow));
+  facturesSheet['!cols'] = colWidths;
+  XLSX.utils.book_append_sheet(workbook, facturesSheet, 'Factures');
 
-  worksheet['!cols'] = [
-    { wch: 15 }, { wch: 10 }, { wch: 30 }, { wch: 25 },
-    { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 },
-    { wch: 8 }, { wch: 15 }, { wch: 15 }, { wch: 30 }
-  ];
+  // Classeur 2 : Devis
+  const devis = invoices.filter(i => i.type === 'devis');
+  const devisSheet = XLSX.utils.json_to_sheet(devis.map(toRow));
+  devisSheet['!cols'] = colWidths;
+  XLSX.utils.book_append_sheet(workbook, devisSheet, 'Devis');
 
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  saveAs(blob, `factures_${new Date().toISOString().split('T')[0]}.xlsx`);
+  saveAs(blob, `factures_devis_${new Date().toISOString().split('T')[0]}.xlsx`);
 };
 
 // ============================================
@@ -430,7 +538,6 @@ export const exportFullReportToExcel = (
 ): void => {
   const workbook = XLSX.utils.book_new();
 
-  // Feuille Résumé
   const summaryData = [
     { 'Indicateur': 'Nombre de Clients', 'Valeur': clients.length },
     { 'Indicateur': 'Clients Actifs', 'Valeur': clients.filter(c => c.status === 'Actif').length },
@@ -445,50 +552,35 @@ export const exportFullReportToExcel = (
   const summarySheet = XLSX.utils.json_to_sheet(summaryData);
   XLSX.utils.book_append_sheet(workbook, summarySheet, 'Résumé');
 
-  // Feuille Clients
   const clientsData = clients.map(c => ({
-    'Nom': c.name,
-    'Email': c.email,
-    'Téléphone': c.phone,
-    'Entreprise': c.company,
-    'Statut': c.status,
-    'Projets': c.projects,
-    'CA (XOF)': c.totalRevenue
+    'Nom': c.name, 'Email': c.email, 'Téléphone': c.phone,
+    'Entreprise': c.company, 'Statut': c.status, 'Projets': c.projects, 'CA (XOF)': c.totalRevenue
   }));
-  const clientsSheet = XLSX.utils.json_to_sheet(clientsData);
-  XLSX.utils.book_append_sheet(workbook, clientsSheet, 'Clients');
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(clientsData), 'Clients');
 
-  // Feuille Projets
   const projectsData = projects.map(p => ({
-    'Nom': p.name,
-    'Client': p.clientName,
-    'Statut': p.status,
-    'Budget (XOF)': p.budget,
-    'Progression': `${p.progress}%`
+    'Nom': p.name, 'Client': p.clientName, 'Statut': p.status,
+    'Budget (XOF)': p.budget, 'Progression': `${p.progress}%`
   }));
-  const projectsSheet = XLSX.utils.json_to_sheet(projectsData);
-  XLSX.utils.book_append_sheet(workbook, projectsSheet, 'Projets');
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(projectsData), 'Projets');
 
-  // Feuille Factures
-  const invoicesData = invoices.map(i => ({
-    'Numéro': i.number,
-    'Type': i.type,
-    'Client': i.clientName,
-    'Statut': i.status,
-    'Total (XOF)': i.total
+  const facturesData = invoices.filter(i => i.type === 'facture').map(i => ({
+    'Numéro': i.number, 'Client': i.clientName,
+    'Statut': i.status, 'Total (XOF)': i.total
   }));
-  const invoicesSheet = XLSX.utils.json_to_sheet(invoicesData);
-  XLSX.utils.book_append_sheet(workbook, invoicesSheet, 'Factures');
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(facturesData), 'Factures');
 
-  // Feuille Transactions
+  const devisData = invoices.filter(i => i.type === 'devis').map(i => ({
+    'Numéro': i.number, 'Client': i.clientName,
+    'Statut': i.status, 'Total (XOF)': i.total
+  }));
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(devisData), 'Devis');
+
   const transactionsData = transactions.map(t => ({
-    'Date': formatDate(t.date),
-    'Description': t.description,
-    'Type': t.type,
-    'Montant (XOF)': t.montant
+    'Date': formatDate(t.date), 'Description': t.description,
+    'Type': t.type, 'Montant (XOF)': t.montant
   }));
-  const transactionsSheet = XLSX.utils.json_to_sheet(transactionsData);
-  XLSX.utils.book_append_sheet(workbook, transactionsSheet, 'Transactions');
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(transactionsData), 'Transactions');
 
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

@@ -67,7 +67,7 @@ const NewClientModal: React.FC<NewClientModalProps> = ({ open, onOpenChange, onC
     setIsSubmitting(true);
 
     try {
-      const newClient = addClient(formData);
+      const newClient = await addClient(formData);
       
       toast({
         title: "Client ajouté avec succès !",
@@ -128,7 +128,7 @@ const NewClientModal: React.FC<NewClientModalProps> = ({ open, onOpenChange, onC
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-white">Nom complet *</Label>
               <Input
@@ -155,7 +155,7 @@ const NewClientModal: React.FC<NewClientModalProps> = ({ open, onOpenChange, onC
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-white">Téléphone *</Label>
               <Input
@@ -182,7 +182,7 @@ const NewClientModal: React.FC<NewClientModalProps> = ({ open, onOpenChange, onC
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-white">Entreprise</Label>
               <Input

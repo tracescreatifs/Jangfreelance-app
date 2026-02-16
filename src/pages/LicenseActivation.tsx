@@ -138,7 +138,7 @@ const LicenseActivation = () => {
                 <Input
                   id="license-key"
                   type="text"
-                  placeholder="FL-PRO-XXXXXXXX-XXXXXXXX"
+                  placeholder="FL-PXXX-XXXX-XXXX-XXXX"
                   value={licenseKey}
                   onChange={(e) => setLicenseKey(e.target.value)}
                   className="bg-white/10 border-white/20 text-white placeholder-purple-300"

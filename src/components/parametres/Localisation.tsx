@@ -48,19 +48,12 @@ const Localisation = () => {
   }, [savedPrefs]);
 
   const langues = [
-    { code: 'fr', nom: 'Français', flag: '🇫🇷' },
-    { code: 'en', nom: 'English', flag: '🇺🇸' },
-    { code: 'wo', nom: 'Wolof', flag: '🇸🇳' },
-    { code: 'ar', nom: 'العربية', flag: '🇸🇦' },
+    { code: 'fr', nom: 'Français' },
   ];
 
   const pays = [
     { code: 'SN', nom: 'Sénégal', flag: '🇸🇳', devise: 'XOF', fuseau: 'Africa/Dakar' },
-    { code: 'CI', nom: 'Côte d\'Ivoire', flag: '🇨🇮', devise: 'XOF', fuseau: 'Africa/Abidjan' },
-    { code: 'ML', nom: 'Mali', flag: '🇲🇱', devise: 'XOF', fuseau: 'Africa/Bamako' },
-    { code: 'BF', nom: 'Burkina Faso', flag: '🇧🇫', devise: 'XOF', fuseau: 'Africa/Ouagadougou' },
-    { code: 'CM', nom: 'Cameroun', flag: '🇨🇲', devise: 'XAF', fuseau: 'Africa/Douala' },
-    { code: 'FR', nom: 'France', flag: '🇫🇷', devise: 'EUR', fuseau: 'Europe/Paris' },
+    { code: 'CI', nom: "Côte d'Ivoire", flag: '🇨🇮', devise: 'XOF', fuseau: 'Africa/Abidjan' },
   ];
 
   const devises = [
@@ -194,7 +187,7 @@ const Localisation = () => {
                     <SelectContent className="bg-gray-800 border-gray-600">
                       {langues.map((langue) => (
                         <SelectItem key={langue.code} value={langue.code} className="text-white hover:bg-gray-700">
-                          {langue.flag} {langue.nom}
+                          {langue.nom}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -270,7 +263,7 @@ const Localisation = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <Label className="text-white font-medium">Séparateur décimal</Label>
                   <Select value={settings.separateurDecimal} onValueChange={(value) => handleSettingChange('separateurDecimal', value)}>

@@ -3,6 +3,7 @@ import { Download, Mail, Phone, Globe, MapPin } from 'lucide-react';
 import { Button } from './ui/button';
 import { useProfessionalProfile } from '../hooks/useProfessionalProfile';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useFiscalConfig } from '../hooks/useFiscalConfig';
 import { exportInvoiceToPDF } from '../services/exportService';
 
 interface InvoiceItem {
@@ -38,9 +39,9 @@ interface InvoicePDFProps {
 const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, onDownload }) => {
   const { profile: proProfile } = useProfessionalProfile();
   const { profile: userProfile } = useUserProfile();
+  const { config: fiscalConfig } = useFiscalConfig();
 
   const handleDownloadPDF = () => {
-    // Transformer les données pour le service d'export
     const invoiceForExport = {
       ...invoice,
       date: invoice.createdAt,
@@ -55,7 +56,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, onDownload }) => {
       ville: proProfile.adresseVille || '',
       telephone: proProfile.telephoneBureau || '',
       emailPro: proProfile.emailProfessionnel || '',
-      siret: proProfile.ninea || '',
+      siret: fiscalConfig.ninea || '',
       formeJuridique: proProfile.formeJuridique || ''
     };
 
@@ -78,6 +79,9 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, onDownload }) => {
     adresseComplete: [proProfile.adresseRue, proProfile.adresseVille, proProfile.adressePays]
       .filter(Boolean).join(', ') || '',
     siteWeb: proProfile.siteWeb || '',
+    ninea: fiscalConfig.ninea || '',
+    formeJuridique: proProfile.formeJuridique || '',
+    secteurActivite: proProfile.secteurActivite || '',
   };
 
   const formatCurrency = (amount: number) => {
@@ -88,153 +92,172 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, onDownload }) => {
     }).format(amount);
   };
 
-  const fiscalRegimes: Record<string, { rate: number; name: string }> = {
-    'BRS': { rate: 5, name: 'BRS 5%' },
-    'TVA': { rate: 18, name: 'TVA 18%' },
-    'Exoneré': { rate: 0, name: 'Exonéré' }
-  };
-
   return (
-    <div className="glass-morphism p-6 sm:p-8 rounded-2xl max-w-4xl mx-auto">
-      {/* Header - entreprise et document côte à côte */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 pb-4 border-b border-white/20">
-        {/* Informations entreprise */}
-        <div className="space-y-1">
-          <h1 className="text-xl sm:text-2xl font-bold">{professionalInfo.nomCommercial}</h1>
-          <div className="opacity-80 text-sm space-y-1">
-            <p className="font-medium">{professionalInfo.nomComplet}</p>
+    <div className="bg-white text-gray-900 p-6 sm:p-10 rounded-xl max-w-4xl mx-auto shadow-lg">
+
+      {/* ---- EN-TÊTE ---- */}
+      <div className="flex justify-between items-start mb-8 pb-6 border-b-2 border-gray-200">
+        {/* Entreprise */}
+        <div className="flex items-center gap-4">
+          {proProfile.logoUrl && (
+            <img
+              src={proProfile.logoUrl}
+              alt="Logo"
+              className="w-16 h-16 object-contain rounded"
+            />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{professionalInfo.nomCommercial}</h1>
+            {professionalInfo.secteurActivite && (
+              <p className="text-sm text-gray-400 mt-1">{professionalInfo.secteurActivite}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Type + Numéro */}
+        <div className="text-right">
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+            {invoice.type === 'facture' ? 'FACTURE' : 'DEVIS'}
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">N° {invoice.number}</p>
+        </div>
+      </div>
+
+      {/* ---- ÉMETTEUR / CLIENT ---- */}
+      <div className="grid grid-cols-2 gap-8 mb-8">
+        {/* Émetteur */}
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">De</p>
+          <p className="font-semibold text-gray-900">{professionalInfo.nomComplet}</p>
+          <div className="text-sm text-gray-500 mt-1 space-y-0.5">
             {professionalInfo.emailProfessionnel && (
-              <div className="flex items-center"><Mail className="w-4 h-4 mr-2 opacity-70" /><span className="opacity-70">{professionalInfo.emailProfessionnel}</span></div>
+              <p>{professionalInfo.emailProfessionnel}</p>
             )}
             {professionalInfo.telephoneBureau && (
-              <div className="flex items-center"><Phone className="w-4 h-4 mr-2 opacity-70" /><span className="opacity-70">{professionalInfo.telephoneBureau}</span></div>
-            )}
-            {professionalInfo.siteWeb && (
-              <div className="flex items-center"><Globe className="w-4 h-4 mr-2 opacity-70" /><span className="opacity-70">{professionalInfo.siteWeb}</span></div>
+              <p>{professionalInfo.telephoneBureau}</p>
             )}
             {professionalInfo.adresseComplete && (
-              <div className="flex items-center"><MapPin className="w-4 h-4 mr-2 opacity-70" /><span className="opacity-70">{professionalInfo.adresseComplete}</span></div>
+              <p>{professionalInfo.adresseComplete}</p>
+            )}
+            {professionalInfo.ninea && (
+              <p className="text-gray-400">NINEA: {professionalInfo.ninea}</p>
             )}
           </div>
         </div>
 
-        {/* Informations document */}
-        <div className="text-right space-y-2">
-          <h2 className="text-xl sm:text-2xl font-bold opacity-80">
-            {invoice.type.toUpperCase()} N° {invoice.number}
-          </h2>
-          <div className="opacity-70 text-sm space-y-0.5">
+        {/* Client */}
+        <div>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Pour</p>
+          <p className="font-semibold text-gray-900">{invoice.clientName}</p>
+          <div className="text-sm text-gray-500 mt-2 space-y-0.5">
             <p>Date: {new Date(invoice.createdAt).toLocaleDateString('fr-FR')}</p>
-            {invoice.dueDate && <p>Échéance: {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}</p>}
-          </div>
-
-          {/* Mentions légales */}
-          <div className="text-xs opacity-60 mt-4 pt-2 border-t border-white/10">
-            <p>Régime: {proProfile.formeJuridique || 'Non renseigné'}</p>
-            <p>Secteur: {proProfile.secteurActivite || 'Non renseigné'}</p>
+            {invoice.dueDate && (
+              <p>Échéance: {new Date(invoice.dueDate).toLocaleDateString('fr-FR')}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Client Info */}
+      {/* ---- OBJET ---- */}
       <div className="mb-6">
-        <h3 className="text-base font-bold mb-2">
-          {invoice.type === 'facture' ? 'Facturé à:' : 'Client:'}
-        </h3>
-        <div className="bg-white/5 p-3 rounded-lg">
-          <p className="font-medium">{invoice.clientName}</p>
-        </div>
+        <p className="text-sm">
+          <span className="font-bold text-gray-900">Objet : </span>
+          <span className="text-gray-700">{invoice.title}</span>
+        </p>
+        {invoice.subtitle && (
+          <p className="text-sm text-gray-500 mt-1">{invoice.subtitle}</p>
+        )}
       </div>
 
-      {/* Invoice Title */}
-      <div className="mb-6 bg-white/5 p-4 rounded-lg">
-        <h2 className="text-lg sm:text-xl font-bold mb-1">{invoice.title}</h2>
-        {invoice.subtitle && <p className="opacity-70">{invoice.subtitle}</p>}
+      {/* ---- TABLEAU ---- */}
+      <div className="mb-8 rounded-lg overflow-hidden border border-gray-200">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-gray-900 text-white">
+              <th className="text-left py-3 px-4 text-sm font-medium">Description</th>
+              <th className="text-center py-3 px-3 text-sm font-medium w-16">Qté</th>
+              <th className="text-right py-3 px-4 text-sm font-medium w-32">Prix unitaire</th>
+              <th className="text-right py-3 px-4 text-sm font-medium w-32">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoice.items.map((item, index) => (
+              <tr
+                key={item.id}
+                className={`border-b border-gray-100 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+              >
+                <td className="py-3 px-4 text-sm text-gray-800">{item.description}</td>
+                <td className="py-3 px-3 text-center text-sm text-gray-600">{item.quantity}</td>
+                <td className="py-3 px-4 text-right text-sm text-gray-600">{formatCurrency(item.unitPrice)}</td>
+                <td className="py-3 px-4 text-right text-sm font-semibold text-gray-900">{formatCurrency(item.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Items Table */}
-      <div className="mb-6">
-        <div className="bg-white/5 rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[500px]">
-              <thead className="bg-white/10">
-                <tr>
-                  <th className="text-left py-3 px-4 opacity-70 font-medium text-sm">Description</th>
-                  <th className="text-center py-3 px-2 opacity-70 font-medium text-sm">Qté</th>
-                  <th className="text-right py-3 px-4 opacity-70 font-medium text-sm">Prix unitaire</th>
-                  <th className="text-right py-3 px-4 opacity-70 font-medium text-sm">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items.map((item, index) => (
-                  <tr key={item.id} className={`border-b border-white/10 ${index % 2 === 0 ? 'bg-white/5' : ''}`}>
-                    <td className="py-3 px-4 text-sm">{item.description}</td>
-                    <td className="py-3 px-2 text-center text-sm">{item.quantity}</td>
-                    <td className="py-3 px-4 text-right text-sm">{formatCurrency(item.unitPrice)}</td>
-                    <td className="py-3 px-4 text-right font-medium text-sm">{formatCurrency(item.total)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Totals */}
-      <div className="flex justify-end mb-6">
-        <div className="bg-white/10 p-4 rounded-lg w-full sm:w-80 border border-white/20">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="opacity-70">Sous-total HT:</span>
-              <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+      {/* ---- TOTAUX ---- */}
+      <div className="flex justify-end mb-8">
+        <div className="w-72">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between text-gray-500">
+              <span>Sous-total HT</span>
+              <span className="text-gray-800">{formatCurrency(invoice.subtotal)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="opacity-70">{fiscalRegimes[invoice.fiscalRegime]?.name || invoice.fiscalRegime || 'Taxe'}:</span>
-              <span className="font-medium">{formatCurrency(invoice.taxAmount)}</span>
+            <div className="flex justify-between text-gray-500">
+              <span>{invoice.taxRate > 0 ? `TVA (${invoice.taxRate}%)` : 'TVA (0%)'}</span>
+              <span className="text-gray-800">{formatCurrency(invoice.taxAmount)}</span>
             </div>
-            <div className="border-t border-white/20 pt-2">
+            <div className="border-t-2 border-gray-900 pt-2 mt-2">
               <div className="flex justify-between">
-                <span className="font-bold text-lg">Total TTC:</span>
-                <span className="font-bold text-lg">{formatCurrency(invoice.total)}</span>
+                <span className="text-lg font-bold text-gray-900">TOTAL TTC</span>
+                <span className="text-lg font-bold text-gray-900">{formatCurrency(invoice.total)}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-white/20 pt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+      {/* ---- CONDITIONS ---- */}
+      <div className="border-t border-gray-200 pt-6 mb-6">
+        <div className="grid grid-cols-2 gap-6 text-xs text-gray-400">
           <div>
-            <h4 className="font-bold mb-2">Conditions de paiement:</h4>
-            <div className="opacity-70 space-y-1">
-              <p>• Paiement à 30 jours</p>
-              <p>• Retard: pénalités 3%/mois</p>
-              <p>• Escompte 2% si paiement à 8 jours</p>
-            </div>
+            <p className="font-bold text-gray-500 mb-1.5 uppercase tracking-wider text-[10px]">Conditions</p>
+            {invoice.type === 'facture' ? (
+              <>
+                <p>• Paiement à 30 jours</p>
+                <p>• Retard : pénalités 3%/mois</p>
+                <p>• Escompte 2% si paiement à 8 jours</p>
+              </>
+            ) : (
+              <>
+                <p>• Devis valable 30 jours</p>
+                <p>• Retourner signé avec mention "Bon pour accord"</p>
+              </>
+            )}
           </div>
           <div>
-            <h4 className="font-bold mb-2">Contact:</h4>
-            <div className="opacity-70 space-y-1">
-              {professionalInfo.emailProfessionnel && <p>{professionalInfo.emailProfessionnel}</p>}
-              {professionalInfo.telephoneBureau && <p>{professionalInfo.telephoneBureau}</p>}
-              {professionalInfo.siteWeb && <p>{professionalInfo.siteWeb}</p>}
-            </div>
+            <p className="font-bold text-gray-500 mb-1.5 uppercase tracking-wider text-[10px]">Contact</p>
+            {professionalInfo.emailProfessionnel && <p>{professionalInfo.emailProfessionnel}</p>}
+            {professionalInfo.telephoneBureau && <p>{professionalInfo.telephoneBureau}</p>}
+            {professionalInfo.siteWeb && <p>{professionalInfo.siteWeb}</p>}
           </div>
-        </div>
-
-        <div className="mt-4 pt-3 border-t border-white/10 text-center">
-          <p className="opacity-60 text-sm">
-            Merci de votre confiance - {professionalInfo.nomCommercial}
-          </p>
         </div>
       </div>
 
-      {/* Download Button */}
+      {/* ---- PIED DE PAGE ---- */}
+      <div className="text-center border-t border-gray-100 pt-4">
+        <p className="text-[10px] text-gray-300">
+          {[professionalInfo.nomCommercial, professionalInfo.formeJuridique, professionalInfo.ninea ? `NINEA: ${professionalInfo.ninea}` : null]
+            .filter(Boolean).join('  ·  ')}
+        </p>
+      </div>
+
+      {/* ---- BOUTON TÉLÉCHARGER ---- */}
       <div className="flex justify-center mt-6">
         <Button
           onClick={handleDownloadPDF}
-          className="bg-gradient-to-r from-purple-500 to-blue-500 hover:scale-105 transition-transform"
+          className="bg-gray-900 text-white hover:bg-gray-800 hover:scale-105 transition-transform"
         >
           <Download className="w-5 h-5 mr-2" />
           Télécharger PDF

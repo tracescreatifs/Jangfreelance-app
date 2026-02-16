@@ -1,16 +1,18 @@
 
-import React, { useState, useEffect } from 'react';
-import { Calculator, AlertTriangle, Check, Info } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calculator, AlertTriangle, Info, TrendingUp } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Alert, AlertDescription } from '../ui/alert';
 import { useFiscalConfig } from '../../hooks/useFiscalConfig';
+import { useInvoices } from '../../hooks/useInvoices';
 import { useToast } from '../../hooks/use-toast';
 
 const ConfigurationFiscale = () => {
   const { config, loading, updateConfig } = useFiscalConfig();
+  const { invoices } = useInvoices();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState(config);
@@ -23,17 +25,28 @@ const ConfigurationFiscale = () => {
 
   const pays = [
     { code: 'SN', nom: 'Sénégal', flag: '🇸🇳', seuilTVA: 50000000 },
-    { code: 'CI', nom: 'Côte d\'Ivoire', flag: '🇨🇮', seuilTVA: 50000000 },
-    { code: 'ML', nom: 'Mali', flag: '🇲🇱', seuilTVA: 50000000 },
-    { code: 'BF', nom: 'Burkina Faso', flag: '🇧🇫', seuilTVA: 50000000 },
-    { code: 'CM', nom: 'Cameroun', flag: '🇨🇲', seuilTVA: 50000000 },
+    { code: 'CI', nom: "Côte d'Ivoire", flag: '🇨🇮', seuilTVA: 50000000 },
   ];
 
   const regimesFiscaux = {
     'BRS': { taux: 5, nom: 'BRS 5%', description: '< 50M CFA' },
     'TVA': { taux: 18, nom: 'TVA 18%', description: '> 50M CFA' },
-    'Exoneré': { taux: 0, nom: 'Exonéré', description: 'Début d\'activité' }
+    'Exoneré': { taux: 0, nom: 'Exonéré', description: "Début d'activité" }
   };
+
+  // CA réel calculé automatiquement des factures payées
+  const caReelAnnee = useMemo(() => {
+    const currentYear = new Date().getFullYear().toString();
+    return invoices
+      .filter(inv => inv.type === 'facture' && inv.status === 'Payé' && inv.createdAt.startsWith(currentYear))
+      .reduce((sum, inv) => sum + inv.total, 0);
+  }, [invoices]);
+
+  const caReelTotal = useMemo(() => {
+    return invoices
+      .filter(inv => inv.type === 'facture' && inv.status === 'Payé')
+      .reduce((sum, inv) => sum + inv.total, 0);
+  }, [invoices]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -54,10 +67,19 @@ const ConfigurationFiscale = () => {
   };
 
   const getCurrentCountry = () => pays.find(p => p.nom === formData.paysExercice);
+
+  // Alerte basée sur le MAX entre CA réel de l'année et CA prévisionnel
   const shouldShowTVAAlert = () => {
-    const ca = parseInt(formData.caPrevisionnelAnnuel);
+    const caPrevisionnel = parseInt(formData.caPrevisionnelAnnuel) || 0;
+    const caMax = Math.max(caReelAnnee, caPrevisionnel);
     const seuil = getCurrentCountry()?.seuilTVA || 50000000;
-    return ca >= seuil && formData.regimeFiscal === 'BRS';
+    return caMax >= seuil && formData.regimeFiscal === 'BRS';
+  };
+
+  // Le CA réel a-t-il dépassé le seuil ?
+  const isReelOverThreshold = () => {
+    const seuil = getCurrentCountry()?.seuilTVA || 50000000;
+    return caReelAnnee >= seuil && formData.regimeFiscal === 'BRS';
   };
 
   const handleSave = async () => {
@@ -87,6 +109,9 @@ const ConfigurationFiscale = () => {
       </div>
     );
   }
+
+  const seuilTVA = getCurrentCountry()?.seuilTVA || 50000000;
+  const progressPercent = Math.min(Math.round((caReelAnnee / seuilTVA) * 100), 100);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -136,31 +161,72 @@ const ConfigurationFiscale = () => {
               </div>
             </div>
 
+            {/* CA Réel (calculé automatiquement) */}
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+              <div className="flex items-center space-x-2 mb-3">
+                <TrendingUp className="w-5 h-5 text-green-400" />
+                <Label className="text-white font-medium text-lg">Chiffre d'Affaires Réel ({new Date().getFullYear()})</Label>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-white/10 p-4 rounded-lg">
+                  <p className="text-purple-200 text-sm">CA année en cours</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(caReelAnnee)}</p>
+                </div>
+                <div className="bg-white/10 p-4 rounded-lg">
+                  <p className="text-purple-200 text-sm">CA total (toutes périodes)</p>
+                  <p className="text-2xl font-bold text-white">{formatCurrency(caReelTotal)}</p>
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-purple-200">Progression vers seuil TVA ({formatCurrency(seuilTVA)})</span>
+                  <span className="text-white font-medium">{progressPercent}%</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 mt-1">
+                  <div
+                    className={`h-2 rounded-full transition-all ${
+                      progressPercent >= 100
+                        ? 'bg-red-500'
+                        : progressPercent >= 80
+                        ? 'bg-orange-500'
+                        : 'bg-green-500'
+                    }`}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
               <Label className="text-white font-medium">CA prévisionnel annuel</Label>
-              <div className="flex space-x-2">
-                <Input
-                  type="number"
-                  value={formData.caPrevisionnelAnnuel}
-                  onChange={(e) => handleInputChange('caPrevisionnelAnnuel', e.target.value)}
-                  className="bg-white/10 border-white/20 text-white placeholder-purple-200"
-                  placeholder="12000000"
-                />
-                <Button className="bg-gradient-to-r from-blue-500 to-purple-500 whitespace-nowrap">
-                  📊 Simulateur
-                </Button>
-              </div>
+              <Input
+                type="number"
+                value={formData.caPrevisionnelAnnuel}
+                onChange={(e) => handleInputChange('caPrevisionnelAnnuel', e.target.value)}
+                className="bg-white/10 border-white/20 text-white placeholder-purple-200"
+                placeholder="12000000"
+              />
               <p className="text-purple-200 text-sm mt-1">
                 Montant estimé: {formatCurrency(parseInt(formData.caPrevisionnelAnnuel) || 0)}
               </p>
             </div>
 
+            {/* Alerte changement de régime */}
             {shouldShowTVAAlert() && (
-              <Alert className="border-orange-500/50 bg-orange-500/10">
-                <AlertTriangle className="h-4 w-4 text-orange-400" />
-                <AlertDescription className="text-orange-200">
-                  Attention ! Votre CA dépasse le seuil TVA de {formatCurrency(getCurrentCountry()?.seuilTVA || 50000000)}. 
-                  Vous devriez passer au régime TVA 18%.
+              <Alert className={`${isReelOverThreshold() ? 'border-red-500/50 bg-red-500/10' : 'border-orange-500/50 bg-orange-500/10'}`}>
+                <AlertTriangle className={`h-4 w-4 ${isReelOverThreshold() ? 'text-red-400' : 'text-orange-400'}`} />
+                <AlertDescription className={isReelOverThreshold() ? 'text-red-200' : 'text-orange-200'}>
+                  {isReelOverThreshold() ? (
+                    <>
+                      <strong>Action requise !</strong> Votre CA réel ({formatCurrency(caReelAnnee)}) a dépassé le seuil TVA de {formatCurrency(seuilTVA)}.
+                      Vous devez passer au régime TVA 18%. Contactez votre comptable pour régulariser votre situation fiscale.
+                    </>
+                  ) : (
+                    <>
+                      Attention ! Votre CA prévisionnel dépasse le seuil TVA de {formatCurrency(seuilTVA)}.
+                      Vous devriez passer au régime TVA 18%.
+                    </>
+                  )}
                 </AlertDescription>
               </Alert>
             )}
@@ -176,17 +242,11 @@ const ConfigurationFiscale = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
                 <Label className="text-white font-medium">NINEA ({formData.paysExercice}) *</Label>
-                <div className="flex space-x-2">
-                  <Input
-                    value={formData.ninea}
-                    onChange={(e) => handleInputChange('ninea', e.target.value)}
-                    className="bg-white/10 border-white/20 text-white placeholder-purple-200"
-                  />
-                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                    <Check className="w-4 h-4 mr-1" />
-                    Vérifier
-                  </Button>
-                </div>
+                <Input
+                  value={formData.ninea}
+                  onChange={(e) => handleInputChange('ninea', e.target.value)}
+                  className="bg-white/10 border-white/20 text-white placeholder-purple-200"
+                />
               </div>
 
               <div>
@@ -262,9 +322,9 @@ const ConfigurationFiscale = () => {
               </AlertDescription>
             </Alert>
             <div className="bg-white/10 p-4 rounded-lg mt-4 font-mono text-sm text-purple-200">
-              <p>Entreprise personnelle - {regimesFiscaux[formData.regimeFiscal as keyof typeof regimesFiscaux].nom}</p>
+              <p>Entreprise personnelle - {regimesFiscaux[formData.regimeFiscal as keyof typeof regimesFiscaux]?.nom || formData.regimeFiscal}</p>
               {formData.regimeFiscal === 'BRS' && <p>Non assujettie à la TVA - Art.356 CGI</p>}
-              <p>NINEA: {formData.ninea}</p>
+              <p>NINEA: {formData.ninea || '—'}</p>
               {formData.rccm && <p>RCCM: {formData.rccm}</p>}
             </div>
           </div>

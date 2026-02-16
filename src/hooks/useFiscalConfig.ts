@@ -37,29 +37,54 @@ export const useFiscalConfig = () => {
       return;
     }
 
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('fiscal_config')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+    // Charger depuis localStorage immédiatement pour débloquer l'UI
+    try {
+      const stored = localStorage.getItem('jang_fiscal_config');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (typeof parsed === 'object' && parsed !== null) {
+          setConfig(prev => ({ ...prev, ...parsed }));
+          setLoading(false);
+        }
+      }
+    } catch (e) { /* ignore */ }
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Erreur chargement config fiscale:', error);
-    } else if (data) {
-      setConfig({
-        paysExercice: data.pays_exercice || 'Sénégal',
-        regimeFiscal: data.regime_fiscal || 'BRS',
-        caPrevisionnelAnnuel: data.ca_previsionnel_annuel || '',
-        ninea: data.ninea || '',
-        rccm: data.rccm || '',
-        numeroTVA: data.numero_tva || '',
-        banque: data.banque || '',
-        iban: data.iban || '',
-        swift: data.swift || '',
-      });
+    // Fetch Supabase en arrière-plan avec timeout de 5s
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const { data, error } = await supabase
+        .from('fiscal_config')
+        .select('*')
+        .eq('user_id', user.id)
+        .abortSignal(controller.signal)
+        .single();
+
+      clearTimeout(timeoutId);
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn('Config fiscale fetch (non-blocking):', error.message);
+      } else if (data) {
+        const newConfig: FiscalConfig = {
+          paysExercice: data.pays_exercice || 'Sénégal',
+          regimeFiscal: data.regime_fiscal || 'BRS',
+          caPrevisionnelAnnuel: data.ca_previsionnel_annuel || '',
+          ninea: data.ninea || '',
+          rccm: data.rccm || '',
+          numeroTVA: data.numero_tva || '',
+          banque: data.banque || '',
+          iban: data.iban || '',
+          swift: data.swift || '',
+        };
+        setConfig(newConfig);
+        try { localStorage.setItem('jang_fiscal_config', JSON.stringify(newConfig)); } catch (e) { /* ignore */ }
+      }
+    } catch (e) {
+      console.warn('Config fiscale fetch timeout/error:', e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {
@@ -93,7 +118,9 @@ export const useFiscalConfig = () => {
       throw error;
     }
 
-    setConfig(prev => ({ ...prev, ...updates }));
+    const newConfig = { ...config, ...updates };
+    setConfig(newConfig);
+    try { localStorage.setItem('jang_fiscal_config', JSON.stringify(newConfig)); } catch (e) { /* ignore */ }
   };
 
   return {

@@ -19,6 +19,7 @@ import { serviceStore, Category } from '../../stores/serviceStore';
 interface NewInvoiceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onInvoiceCreated?: () => void;
 }
 
 interface InvoiceItem {
@@ -31,7 +32,7 @@ interface InvoiceItem {
   price: number;
 }
 
-const NewInvoiceModal: React.FC<NewInvoiceModalProps> = ({ open, onOpenChange }) => {
+const NewInvoiceModal: React.FC<NewInvoiceModalProps> = ({ open, onOpenChange, onInvoiceCreated }) => {
   const { clients } = useClients();
   const { addInvoice } = useInvoices();
   const { projects } = useProjects();
@@ -205,6 +206,7 @@ const NewInvoiceModal: React.FC<NewInvoiceModalProps> = ({ open, onOpenChange })
         description: `${type === 'facture' ? 'Facture' : 'Devis'} créé avec succès`,
       });
 
+      onInvoiceCreated?.();
       onOpenChange(false);
 
       // Reset form
@@ -251,7 +253,7 @@ const NewInvoiceModal: React.FC<NewInvoiceModalProps> = ({ open, onOpenChange })
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-white">Client</Label>
               <Select value={formData.client} onValueChange={(value) => {
@@ -295,7 +297,7 @@ const NewInvoiceModal: React.FC<NewInvoiceModalProps> = ({ open, onOpenChange })
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <Label className="text-white">Type</Label>
               <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
@@ -368,7 +370,7 @@ const NewInvoiceModal: React.FC<NewInvoiceModalProps> = ({ open, onOpenChange })
             
             {items.map((item, index) => (
               <div key={item.id} className="space-y-3 p-4 bg-white/5 rounded-lg">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div>
                     <Label className="text-white text-sm">Catégorie</Label>
                     <Select 

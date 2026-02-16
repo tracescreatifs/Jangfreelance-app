@@ -70,6 +70,7 @@ export const useProjects = () => {
     const { data, error } = await supabase
       .from('projects')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -145,7 +146,7 @@ export const useProjects = () => {
   const deleteProject = async (id: string) => {
     const { error } = await supabase
       .from('projects')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {

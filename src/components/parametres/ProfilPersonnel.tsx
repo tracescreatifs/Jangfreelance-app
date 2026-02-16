@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Check, Plus, X } from 'lucide-react';
+import { Camera, Plus, X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -15,15 +15,37 @@ const ProfilPersonnel = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // État local pour l'édition (évite une requête Supabase à chaque frappe)
+  // État local pour l'édition
   const [formData, setFormData] = useState(profile);
+  const hasUserEdited = useRef(false);
+  const formDataRef = useRef(formData);
 
-  // Synchroniser avec les données Supabase quand elles arrivent
+  // Garder formDataRef à jour
+  useEffect(() => { formDataRef.current = formData; }, [formData]);
+
+  // Synchroniser avec les données du hook quand elles arrivent
+  // (mais seulement si l'utilisateur n'a pas encore commencé à éditer)
   useEffect(() => {
-    setFormData(profile);
+    if (!hasUserEdited.current) {
+      setFormData(profile);
+    }
   }, [profile]);
 
+  // Sauvegarder dans localStorage à la fermeture du composant
+  useEffect(() => {
+    return () => {
+      if (hasUserEdited.current) {
+        try {
+          localStorage.setItem('jang_user_profile', JSON.stringify(formDataRef.current));
+        } catch (e) {
+          // Best effort
+        }
+      }
+    };
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
+    hasUserEdited.current = true;
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -79,6 +101,7 @@ const ProfilPersonnel = () => {
     setIsSaving(true);
     try {
       await updateProfile(formData);
+      hasUserEdited.current = false;
       toast({
         title: "Profil sauvegardé",
         description: "Toutes vos modifications ont été enregistrées avec succès"
@@ -92,6 +115,11 @@ const ProfilPersonnel = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    setFormData(profile);
+    hasUserEdited.current = false;
   };
 
   const getInitials = () => {
@@ -225,7 +253,7 @@ const ProfilPersonnel = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-white font-medium">Code postal</Label>
                 <Input
@@ -305,7 +333,11 @@ const ProfilPersonnel = () => {
 
         {/* Boutons d'action */}
         <div className="flex justify-end space-x-4">
-          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+          <Button
+            variant="outline"
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={handleCancel}
+          >
             Annuler
           </Button>
           <Button

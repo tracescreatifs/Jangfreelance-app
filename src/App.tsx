@@ -24,6 +24,13 @@ import Paiement from "./pages/Paiement";
 import PaiementSuccess from "./pages/PaiementSuccess";
 import LicenseActivation from "./pages/LicenseActivation";
 import LicenseAdmin from "./pages/LicenseAdmin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminLicenses from "./pages/admin/AdminLicenses";
+import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminEmails from "./pages/admin/AdminEmails";
+import AdminRoute from "./components/AdminRoute";
+import Corbeille from "./pages/Corbeille";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +65,14 @@ const App = () => (
             <Route path="/paiement/success" element={<ProtectedRoute><PaiementSuccess /></ProtectedRoute>} />
             <Route path="/license" element={<ProtectedRoute><LicenseActivation /></ProtectedRoute>} />
             <Route path="/license-admin" element={<ProtectedRoute><LicenseAdmin /></ProtectedRoute>} />
+            <Route path="/corbeille" element={<ProtectedRoute><Corbeille /></ProtectedRoute>} />
+
+            {/* Routes admin */}
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+            <Route path="/admin/licenses" element={<AdminRoute><AdminLicenses /></AdminRoute>} />
+            <Route path="/admin/revenue" element={<AdminRoute><AdminRevenue /></AdminRoute>} />
+            <Route path="/admin/emails" element={<AdminRoute><AdminEmails /></AdminRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
