@@ -30,6 +30,7 @@ import AdminLicenses from "./pages/admin/AdminLicenses";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminRoute from "./components/AdminRoute";
+import Agenda from "./pages/Agenda";
 import Corbeille from "./pages/Corbeille";
 import NotFound from "./pages/NotFound";
 
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/projets" element={<ProtectedRoute><Projets /></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
             <Route path="/timer" element={<ProtectedRoute><TimerPage /></ProtectedRoute>} />
+            <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
             <Route path="/factures" element={<ProtectedRoute><Factures /></ProtectedRoute>} />
             <Route path="/comptabilite" element={<ProtectedRoute><Comptabilite /></ProtectedRoute>} />
             <Route path="/suivi" element={<ProtectedRoute><Suivi /></ProtectedRoute>} />

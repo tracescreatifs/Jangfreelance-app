@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   Shield,
-  Trash2
+  Trash2,
+  CalendarDays
 } from 'lucide-react';
 import { APP_VERSION } from '@/lib/version';
 
@@ -53,6 +54,7 @@ const Sidebar = () => {
     { name: 'Clients', icon: Users, path: '/clients' },
     { name: 'Services', icon: Briefcase, path: '/services' },
     { name: 'Timer', icon: Clock, path: '/timer' },
+    { name: 'Agenda', icon: CalendarDays, path: '/agenda' },
     { name: 'Suivi de Projet', icon: BarChart3, path: '/suivi' },
     { name: 'Factures', icon: FileText, path: '/factures' },
     { name: 'Comptabilité', icon: Calculator, path: '/comptabilite' },

@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 
 // ── Types ────────────────────────────────────────────────────
 
-export type TrashItemType = 'client' | 'project' | 'invoice' | 'transaction' | 'license';
+export type TrashItemType = 'client' | 'project' | 'invoice' | 'transaction' | 'license' | 'agenda_event';
 
 export interface TrashItem {
   id: string;
@@ -19,6 +19,7 @@ const TYPE_LABELS: Record<TrashItemType, string> = {
   invoice: 'Facture',
   transaction: 'Transaction',
   license: 'Licence',
+  agenda_event: 'Événement',
 };
 
 const TYPE_TABLES: Record<TrashItemType, string> = {
@@ -27,6 +28,7 @@ const TYPE_TABLES: Record<TrashItemType, string> = {
   invoice: 'invoices',
   transaction: 'transactions',
   license: 'license_keys',
+  agenda_event: 'agenda_events',
 };
 
 // ── Hook ─────────────────────────────────────────────────────
@@ -123,6 +125,26 @@ export const useTrash = () => {
             name: l.key || 'Licence',
             details: l.client_name || '',
             deleted_at: l.deleted_at,
+          });
+        });
+      }
+
+      // Événements agenda
+      const { data: agendaEvents } = await supabase
+        .from('agenda_events')
+        .select('id, title, type, start_date, deleted_at')
+        .not('deleted_at', 'is', null);
+      if (agendaEvents) {
+        agendaEvents.forEach((e: any) => {
+          const typeLabel = e.type === 'meeting' ? 'Réunion' :
+                            e.type === 'appointment' ? 'RDV' :
+                            e.type === 'reminder' ? 'Rappel' : 'Tâche';
+          allItems.push({
+            id: e.id,
+            type: 'agenda_event',
+            name: e.title || 'Événement sans titre',
+            details: `${typeLabel}${e.start_date ? ' — ' + new Date(e.start_date).toLocaleDateString('fr-FR') : ''}`,
+            deleted_at: e.deleted_at,
           });
         });
       }

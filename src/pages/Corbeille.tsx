@@ -14,6 +14,7 @@ import {
   FileText,
   Calculator,
   Key,
+  CalendarDays,
 } from 'lucide-react';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -24,9 +25,10 @@ const typeConfig: Record<TrashItemType, { label: string; icon: React.ElementType
   invoice: { label: 'Facture', icon: FileText, color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
   transaction: { label: 'Transaction', icon: Calculator, color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
   license: { label: 'Licence', icon: Key, color: 'bg-red-500/20 text-red-300 border-red-500/30' },
+  agenda_event: { label: 'Événement', icon: CalendarDays, color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
 };
 
-const ALL_TYPES: TrashItemType[] = ['client', 'project', 'invoice', 'transaction', 'license'];
+const ALL_TYPES: TrashItemType[] = ['client', 'project', 'invoice', 'transaction', 'license', 'agenda_event'];
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '';

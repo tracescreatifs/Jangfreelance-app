@@ -1,5 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import NotificationCard from '../components/NotificationCard';
 import NotificationActions from '../components/NotificationActions';
@@ -21,6 +22,7 @@ import { useTransactions } from '../hooks/useTransactions';
 import { Plus, FileText, UserPlus, Calendar, BarChart3, DollarSign } from 'lucide-react';
 
 const Index = () => {
+  const navigate = useNavigate();
   const { clients } = useClients();
   const { projects } = useProjects();
   const { invoices } = useInvoices();
@@ -188,6 +190,15 @@ const Index = () => {
       case 'new-invoice':
         setIsInvoiceModalOpen(true);
         break;
+      case 'schedule':
+        navigate('/agenda');
+        break;
+      case 'analytics':
+        navigate('/suivi');
+        break;
+      case 'accounting':
+        navigate('/comptabilite');
+        break;
       default:
         break;
     }
@@ -240,7 +251,7 @@ const Index = () => {
             />
             <QuickAction
               icon={Calendar}
-              title="Plannifier"
+              title="Planifier"
               description="Gérer le planning"
               onClick={() => handleQuickAction('schedule')}
             />
