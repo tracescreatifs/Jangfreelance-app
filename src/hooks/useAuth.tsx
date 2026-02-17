@@ -188,8 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               user_id: data.user.id,
               plan_id: freePlan.id,
               status: 'active',
-              start_date: new Date().toISOString(),
-              end_date: expiryDate.toISOString(),
+              current_period_start: new Date().toISOString(),
+              current_period_end: expiryDate.toISOString(),
               license_key: licenseInfo.key,
             }, { onConflict: 'user_id' });
           } else {

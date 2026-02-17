@@ -333,8 +333,8 @@ export const useAdmin = () => {
             user_id: userId,
             plan_id: planId,
             status: 'active',
-            start_date: new Date().toISOString(),
-            end_date: expiryDate.toISOString(),
+            current_period_start: new Date().toISOString(),
+            current_period_end: expiryDate.toISOString(),
             license_key: licenseInfo.key,
           },
           { onConflict: 'user_id' }
