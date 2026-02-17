@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { sendWelcomeEmail } from '@/services/emailService';
 
 interface AuthContextType {
   session: Session | null;
@@ -156,6 +157,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // On ne bloque pas l'inscription si le profil échoue
           // Le profil sera créé plus tard
         }
+
+        // 3. Envoyer email de bienvenue (non-bloquant)
+        sendWelcomeEmail(email, fullName)
+          .catch(err => console.warn('[useAuth] Welcome email error:', err));
       }
 
       return { error: null };

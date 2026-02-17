@@ -361,3 +361,98 @@ export const sendCommercialEmail = async (
 
   return sendEmail(to, subject, html, senderName);
 };
+
+// Template HTML pour l'email de bienvenue
+const generateWelcomeEmailHTML = (fullName: string): string => {
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue sur Jang</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); padding: 40px 30px; border-radius: 16px 16px 0 0; text-align: center;">
+      <div style="display: inline-block; width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 16px; line-height: 60px; margin-bottom: 15px;">
+        <span style="color: white; font-size: 28px; font-weight: bold;">J</span>
+      </div>
+      <h1 style="color: white; margin: 0; font-size: 28px;">Bienvenue sur Jang !</h1>
+      <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">Gestion freelance simplifiée</p>
+    </div>
+
+    <!-- Content -->
+    <div style="background: white; padding: 30px; border-radius: 0 0 16px 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+        Bonjour <strong>${fullName}</strong>,
+      </p>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+        Votre compte Jang a été créé avec succès. Nous sommes ravis de vous compter parmi nous !
+      </p>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+        Jang est votre outil tout-en-un pour gérer votre activité de freelance. Voici ce que vous pouvez faire :
+      </p>
+
+      <!-- Features Box -->
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 25px 0;">
+        <div style="margin-bottom: 15px;">
+          <span style="color: #8b5cf6; font-weight: 600;">📋 Projets</span>
+          <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Gérez vos projets, suivez leur avancement et respectez vos délais.</p>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <span style="color: #8b5cf6; font-weight: 600;">📄 Factures & Devis</span>
+          <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Créez et envoyez des factures et devis professionnels en quelques clics.</p>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <span style="color: #8b5cf6; font-weight: 600;">👥 Clients</span>
+          <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Centralisez les informations de vos clients et suivez vos relations.</p>
+        </div>
+        <div>
+          <span style="color: #8b5cf6; font-weight: 600;">💰 Comptabilité</span>
+          <p style="color: #64748b; margin: 4px 0 0 0; font-size: 14px;">Suivez vos revenus, dépenses et gardez une vision claire de vos finances.</p>
+        </div>
+      </div>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+        Connectez-vous dès maintenant et commencez à organiser votre activité !
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="https://jangfreelance.vercel.app" style="display: inline-block; background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%); color: white; text-decoration: none; padding: 14px 40px; border-radius: 12px; font-size: 16px; font-weight: 600;">
+          Accéder à Jang
+        </a>
+      </div>
+
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin-top: 25px;">
+        À bientôt,<br>
+        <strong>L'équipe Jang</strong>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">
+      <p style="margin: 0;">
+        <strong>Jang</strong> - Gestion freelance simplifiée
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+};
+
+// Envoyer un email de bienvenue après inscription
+export const sendWelcomeEmail = async (
+  email: string,
+  fullName: string
+): Promise<{ success: boolean; message: string }> => {
+  const subject = 'Bienvenue sur Jang ! 🎉';
+  const html = generateWelcomeEmailHTML(fullName);
+
+  return sendEmail(email, subject, html, 'Jang');
+};

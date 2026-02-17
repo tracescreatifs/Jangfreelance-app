@@ -57,7 +57,7 @@ export default function Register() {
         toast.error(error.message);
       }
     } else {
-      toast.success('Compte créé ! Vérifiez votre email pour confirmer votre inscription.');
+      toast.success('Compte créé avec succès ! Bienvenue sur Jang.');
     }
   };
 
