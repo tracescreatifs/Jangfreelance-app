@@ -30,6 +30,8 @@ import AdminLicenses from "./pages/admin/AdminLicenses";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminRoute from "./components/AdminRoute";
+import AuthCallback from "./pages/AuthCallback";
+import ResetPassword from "./pages/ResetPassword";
 import Agenda from "./pages/Agenda";
 import Corbeille from "./pages/Corbeille";
 import NotFound from "./pages/NotFound";
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Routes protégées */}
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
