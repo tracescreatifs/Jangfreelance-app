@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { sendWelcomeEmail } from '@/services/emailService';
+import { LicenseGenerator } from '@/utils/licenseGenerator';
 
 interface AuthContextType {
   session: Session | null;
@@ -156,6 +157,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('Erreur création profil:', profileError);
           // On ne bloque pas l'inscription si le profil échoue
           // Le profil sera créé plus tard
+        }
+
+        // 2b. Assigner plan Gratuit avec licence 3 mois (non-bloquant)
+        try {
+          const { data: freePlan } = await supabase
+            .from('subscription_plans')
+            .select('id')
+            .eq('slug', 'free')
+            .single();
+
+          if (freePlan) {
+            const durationMonths = 3;
+            const licenseInfo = LicenseGenerator.generateLicenseKey('STARTER', durationMonths);
+
+            await supabase.from('license_keys').insert({
+              key: licenseInfo.key,
+              plan_id: freePlan.id,
+              duration_months: durationMonths,
+              is_used: true,
+              used_by: data.user.id,
+              used_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
+            });
+
+            const expiryDate = new Date();
+            expiryDate.setMonth(expiryDate.getMonth() + durationMonths);
+
+            await supabase.from('subscriptions').upsert({
+              user_id: data.user.id,
+              plan_id: freePlan.id,
+              status: 'active',
+              start_date: new Date().toISOString(),
+              end_date: expiryDate.toISOString(),
+              license_key: licenseInfo.key,
+            }, { onConflict: 'user_id' });
+          } else {
+            console.warn('[useAuth] Plan gratuit (slug=free) non trouvé dans subscription_plans');
+          }
+        } catch (licenseErr) {
+          console.warn('[useAuth] Auto-license error:', licenseErr);
         }
 
         // 3. Envoyer email de bienvenue (non-bloquant)

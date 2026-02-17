@@ -93,9 +93,7 @@ export const useAdmin = () => {
           return {
             id: profile.id,
             email: profile.email || '',
-            full_name: profile.full_name || profile.prenom
-              ? `${profile.prenom || ''} ${profile.nom || ''}`.trim()
-              : '',
+            full_name: profile.full_name || '',
             role: profile.role || 'user',
             created_at: profile.created_at || '',
             last_login: profile.last_login || null,
