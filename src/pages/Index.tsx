@@ -18,8 +18,10 @@ import { useClients } from '../hooks/useClients';
 import { useProjects } from '../hooks/useProjects';
 import { useInvoices } from '../hooks/useInvoices';
 import { useTransactions } from '../hooks/useTransactions';
+import { useProfile } from '../hooks/useProfile';
+import { Button } from '@/components/ui/button';
 
-import { Plus, FileText, UserPlus, Calendar, BarChart3, DollarSign } from 'lucide-react';
+import { Plus, FileText, UserPlus, Calendar, BarChart3, DollarSign, User, X } from 'lucide-react';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -27,6 +29,10 @@ const Index = () => {
   const { projects } = useProjects();
   const { invoices } = useInvoices();
   const { transactions } = useTransactions();
+  const { profile } = useProfile();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const showProfileBanner = !bannerDismissed && profile && (!profile.phone || !profile.company_name);
 
   const [notifications, setNotifications] = useState([
     {
@@ -213,6 +219,34 @@ const Index = () => {
       <Sidebar />
 
       <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8">
+        {showProfileBanner && (
+          <div className="mb-4 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center shrink-0">
+                <User className="w-4 h-4 text-white" />
+              </div>
+              <p className="text-white text-sm">
+                Compl\u00e9tez votre profil pour profiter pleinement de Jang
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                onClick={() => navigate('/parametres')}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-3"
+              >
+                Compl\u00e9ter
+              </Button>
+              <button
+                onClick={() => setBannerDismissed(true)}
+                className="text-white/40 hover:text-white/70 p-1 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Dashboard</h1>
           <p className="text-purple-200">Vue d'ensemble de votre activité freelance</p>

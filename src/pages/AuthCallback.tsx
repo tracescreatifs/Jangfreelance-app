@@ -36,9 +36,13 @@ export default function AuthCallback() {
           // Reset password → envoyer vers la page de changement de mot de passe
           setMessage('Redirection vers le changement de mot de passe...');
           setTimeout(() => navigate('/reset-password'), 500);
-        } else if (type === 'signup' || type === 'email_change' || session) {
-          // Confirmation email reussie ou autre → dashboard
-          setMessage('Compte confirmé ! Redirection...');
+        } else if (type === 'signup') {
+          // Inscription confirmee → onboarding
+          setMessage('Compte confirmé ! Configuration...');
+          setTimeout(() => navigate('/onboarding'), 1000);
+        } else if (type === 'email_change' || session) {
+          // Autre confirmation → dashboard
+          setMessage('Confirmé ! Redirection...');
           setTimeout(() => navigate('/'), 1000);
         } else {
           // Fallback → login

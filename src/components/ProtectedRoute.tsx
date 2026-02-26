@@ -21,8 +21,11 @@ function ExpiredBanner() {
   );
 }
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, licenseExpired, isAdmin } = useAuth();
+export default function ProtectedRoute({
+  children,
+  skipOnboardingCheck = false
+}: { children: React.ReactNode; skipOnboardingCheck?: boolean }) {
+  const { user, loading, licenseExpired, isAdmin, onboardingCompleted } = useAuth();
 
   if (loading) {
     return (
@@ -37,6 +40,10 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!skipOnboardingCheck && !onboardingCompleted && !isAdmin) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   const showExpiredBanner = licenseExpired && !isAdmin;

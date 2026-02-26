@@ -12,6 +12,8 @@ interface AuthContextType {
   isAdmin: boolean;
   isReadOnly: boolean;
   licenseExpired: boolean;
+  onboardingCompleted: boolean;
+  setOnboardingComplete: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -26,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string>('user');
   const [licenseExpired, setLicenseExpired] = useState(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
 
   const isAdmin = role === 'admin' || role === 'staff';
   const isReadOnly = licenseExpired && !isAdmin;
@@ -91,6 +94,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchOnboardingStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', userId)
+        .single();
+
+      if (!error && data) {
+        setOnboardingCompleted(data.onboarding_completed ?? true);
+      } else {
+        setOnboardingCompleted(true);
+      }
+    } catch (err) {
+      console.warn('[useAuth] fetchOnboardingStatus error:', err);
+      setOnboardingCompleted(true);
+    }
+  };
+
+  const setOnboardingComplete = async () => {
+    if (!user) return;
+    try {
+      await supabase
+        .from('profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id);
+      setOnboardingCompleted(true);
+    } catch (err) {
+      console.warn('[useAuth] setOnboardingComplete error:', err);
+      setOnboardingCompleted(true);
+    }
+  };
+
   useEffect(() => {
     // Récupérer la session actuelle
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -99,6 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         fetchUserRole(session.user.id);
         checkLicenseExpiry(session.user.id);
+        fetchOnboardingStatus(session.user.id);
       }
       setLoading(false);
     });
@@ -111,9 +148,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           fetchUserRole(session.user.id);
           checkLicenseExpiry(session.user.id);
+          fetchOnboardingStatus(session.user.id);
         } else {
           setRole('user');
           setLicenseExpired(false);
+          setOnboardingCompleted(true);
         }
         setLoading(false);
       }
@@ -149,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user_id: data.user.id,
             full_name: fullName,
             email: email,
+            onboarding_completed: false,
           }, {
             onConflict: 'id'
           });
@@ -231,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, role, isAdmin, isReadOnly, licenseExpired, signUp, signIn, signOut, resetPassword }}>
+    <AuthContext.Provider value={{ session, user, loading, role, isAdmin, isReadOnly, licenseExpired, onboardingCompleted, setOnboardingComplete, signUp, signIn, signOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
