@@ -14,6 +14,9 @@ export interface AdminUser {
   last_login: string | null;
   subscription_status: string | null;
   plan_name: string | null;
+  ninea: string | null;
+  rccm: string | null;
+  regime_fiscal: string | null;
 }
 
 export interface AdminPayment {
@@ -71,6 +74,9 @@ export const useAdmin = () => {
         profiles.map(async (profile: any) => {
           let subscription_status: string | null = null;
           let plan_name: string | null = null;
+          let ninea: string | null = null;
+          let rccm: string | null = null;
+          let regime_fiscal: string | null = null;
 
           try {
             const { data: sub, error: subError } = await supabase
@@ -90,6 +96,22 @@ export const useAdmin = () => {
             // Non-blocking: skip subscription info for this user
           }
 
+          try {
+            const { data: fiscal, error: fiscalError } = await supabase
+              .from('fiscal_config')
+              .select('ninea, rccm, regime_fiscal')
+              .eq('user_id', profile.id)
+              .maybeSingle();
+
+            if (!fiscalError && fiscal) {
+              ninea = fiscal.ninea || null;
+              rccm = fiscal.rccm || null;
+              regime_fiscal = fiscal.regime_fiscal || null;
+            }
+          } catch {
+            // Non-blocking: skip fiscal info for this user
+          }
+
           return {
             id: profile.id,
             email: profile.email || '',
@@ -99,6 +121,9 @@ export const useAdmin = () => {
             last_login: profile.last_login || null,
             subscription_status,
             plan_name,
+            ninea,
+            rccm,
+            regime_fiscal,
           };
         })
       );

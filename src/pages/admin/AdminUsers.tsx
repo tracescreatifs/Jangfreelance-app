@@ -271,6 +271,9 @@ const AdminUsers: React.FC = () => {
                       <TableHead className="hidden sm:table-cell text-white/60">Email</TableHead>
                       <TableHead className="text-white/60">Role</TableHead>
                       <TableHead className="hidden sm:table-cell text-white/60">Plan actif</TableHead>
+                      <TableHead className="hidden md:table-cell text-white/60">NINEA</TableHead>
+                      <TableHead className="hidden md:table-cell text-white/60">RCCM</TableHead>
+                      <TableHead className="hidden md:table-cell text-white/60">R\u00e9gime fiscal</TableHead>
                       <TableHead className="hidden md:table-cell text-white/60">Date inscription</TableHead>
                       <TableHead className="text-white/60 text-right">Actions</TableHead>
                     </TableRow>
@@ -278,7 +281,7 @@ const AdminUsers: React.FC = () => {
                   <TableBody>
                     {filteredUsers.length === 0 ? (
                       <TableRow className="border-white/10">
-                        <TableCell colSpan={6} className="text-center py-10 text-white/40">
+                        <TableCell colSpan={9} className="text-center py-10 text-white/40">
                           Aucun utilisateur trouve.
                         </TableCell>
                       </TableRow>
@@ -306,6 +309,15 @@ const AdminUsers: React.FC = () => {
                             ) : (
                               <span className="text-white/30">—</span>
                             )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-white/50 text-sm">
+                            {user.ninea || <span className="text-white/20">—</span>}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-white/50 text-sm">
+                            {user.rccm || <span className="text-white/20">—</span>}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-white/50 text-sm">
+                            {user.regime_fiscal || <span className="text-white/20">—</span>}
                           </TableCell>
                           <TableCell className="hidden md:table-cell text-white/50 text-sm">
                             {formatDate(user.created_at)}
