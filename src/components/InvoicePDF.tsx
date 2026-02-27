@@ -41,7 +41,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, onDownload }) => {
   const { profile: userProfile } = useUserProfile();
   const { config: fiscalConfig } = useFiscalConfig();
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const invoiceForExport = {
       ...invoice,
       date: invoice.createdAt,
@@ -64,7 +64,23 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, onDownload }) => {
       nom: `${userProfile.prenom || ''} ${userProfile.nom || ''}`.trim() || 'Votre nom'
     };
 
-    exportInvoiceToPDF(invoiceForExport as any, professionalProfile, userProfileForExport);
+    // Convertir le logo en data URL pour le PDF
+    let logoDataUrl: string | undefined;
+    if (proProfile.logoUrl) {
+      try {
+        const response = await fetch(proProfile.logoUrl);
+        const blob = await response.blob();
+        logoDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch {
+        // Si le logo échoue, on continue sans
+      }
+    }
+
+    exportInvoiceToPDF(invoiceForExport as any, professionalProfile, userProfileForExport, logoDataUrl);
 
     if (onDownload) {
       onDownload();

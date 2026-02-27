@@ -32,64 +32,78 @@ const formatDate = (dateString: string): string => {
 };
 
 // ============================================
-// EXPORT PDF - FACTURE / DEVIS — DESIGN ÉPURÉ N&B
+// EXPORT PDF - FACTURE / DEVIS — DESIGN IDENTIQUE À L'APERÇU
 // ============================================
 export const exportInvoiceToPDF = (
   invoice: Invoice,
   professionalProfile: any,
-  userProfile: any
+  userProfile: any,
+  logoDataUrl?: string
 ): void => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
-  const contentWidth = pageWidth - margin * 2;
 
-  // ---- COULEURS N&B ----
-  const black = [20, 20, 20];
-  const darkGray = [60, 60, 60];
-  const mediumGray = [120, 120, 120];
-  const lightGray = [200, 200, 200];
-  const bgLight = [245, 245, 245];
+  // ---- COULEURS (identiques à l'aperçu plateforme) ----
+  const black: [number, number, number] = [20, 20, 20];
+  const darkGray: [number, number, number] = [60, 60, 60];
+  const mediumGray: [number, number, number] = [120, 120, 120];
+  const lightGray: [number, number, number] = [200, 200, 200];
+  const tableHeaderBg: [number, number, number] = [20, 20, 20];
+  const altRowBg: [number, number, number] = [249, 250, 251];
 
   // ---- EN-TÊTE ----
-  // Nom entreprise (gauche)
-  doc.setFontSize(22);
+  let headerLeftX = margin;
+
+  // Logo (si disponible)
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, 'PNG', margin, 14, 16, 16);
+      headerLeftX = margin + 20;
+    } catch {
+      // Si le logo échoue, on continue sans
+    }
+  }
+
+  // Nom entreprise
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...black);
-  doc.text(professionalProfile?.nomEntreprise || 'Mon Entreprise', margin, 28);
+  doc.text(professionalProfile?.nomEntreprise || 'Mon Entreprise', headerLeftX, 24);
 
   // Secteur (sous le nom)
   if (professionalProfile?.secteurActivite) {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...mediumGray);
-    doc.text(professionalProfile.secteurActivite, margin, 35);
+    doc.text(professionalProfile.secteurActivite, headerLeftX, 31);
   }
 
-  // Type document (droite, grand)
+  // Type document (droite)
   const docType = invoice.type === 'facture' ? 'FACTURE' : 'DEVIS';
-  doc.setFontSize(28);
+  doc.setFontSize(26);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...black);
-  doc.text(docType, pageWidth - margin, 28, { align: 'right' });
+  doc.text(docType, pageWidth - margin, 24, { align: 'right' });
 
-  // Numéro (droite, sous le type)
-  doc.setFontSize(11);
+  // Numéro
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...mediumGray);
-  doc.text(`N° ${invoice.number}`, pageWidth - margin, 36, { align: 'right' });
+  doc.text(`N\u00b0 ${invoice.number}`, pageWidth - margin, 32, { align: 'right' });
 
-  // Ligne de séparation fine
+  // Ligne de s\u00e9paration
   doc.setDrawColor(...lightGray);
-  doc.setLineWidth(0.5);
-  doc.line(margin, 42, pageWidth - margin, 42);
+  doc.setLineWidth(0.8);
+  doc.line(margin, 38, pageWidth - margin, 38);
 
-  // ---- INFORMATIONS ÉMETTEUR / CLIENT ----
-  let yPos = 52;
+  // ---- \u00c9METTEUR / CLIENT ----
+  let yPos = 48;
+  const rightColX = pageWidth / 2 + 10;
 
-  // Émetteur (gauche)
-  doc.setFontSize(8);
+  // \u00c9metteur (gauche)
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...mediumGray);
   doc.text('DE', margin, yPos);
@@ -103,56 +117,60 @@ export const exportInvoiceToPDF = (
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...darkGray);
   let emitterY = yPos + 14;
-  if (professionalProfile?.adresse) {
-    doc.text(professionalProfile.adresse, margin, emitterY);
-    emitterY += 5;
-  }
-  const cityLine = [professionalProfile?.codePostal, professionalProfile?.ville].filter(Boolean).join(' ');
-  if (cityLine) {
-    doc.text(cityLine, margin, emitterY);
+  if (professionalProfile?.emailPro) {
+    doc.text(professionalProfile.emailPro, margin, emitterY);
     emitterY += 5;
   }
   if (professionalProfile?.telephone) {
     doc.text(professionalProfile.telephone, margin, emitterY);
     emitterY += 5;
   }
-  if (professionalProfile?.emailPro) {
-    doc.text(professionalProfile.emailPro, margin, emitterY);
+  if (professionalProfile?.adresse) {
+    const fullAddr = [professionalProfile.adresse, professionalProfile.codePostal, professionalProfile.ville]
+      .filter(Boolean).join(', ');
+    doc.text(fullAddr, margin, emitterY);
     emitterY += 5;
   }
   if (professionalProfile?.siret) {
     doc.setTextColor(...mediumGray);
+    doc.setFontSize(8);
     doc.text(`NINEA: ${professionalProfile.siret}`, margin, emitterY);
   }
 
   // Client (droite)
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...mediumGray);
-  doc.text('POUR', pageWidth - margin - 70, yPos);
+  doc.text('POUR', rightColX, yPos);
 
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...black);
-  doc.text(invoice.clientName, pageWidth - margin - 70, yPos + 7);
+  doc.text(invoice.clientName, rightColX, yPos + 7);
 
-  // Dates (droite, sous le client)
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...darkGray);
-  doc.text(`Date: ${formatDate(invoice.date)}`, pageWidth - margin - 70, yPos + 18);
+  doc.text(`Date: ${formatDate(invoice.date)}`, rightColX, yPos + 16);
   if (invoice.dueDate) {
-    doc.text(`Échéance: ${formatDate(invoice.dueDate)}`, pageWidth - margin - 70, yPos + 24);
+    doc.text(`\u00c9ch\u00e9ance: ${formatDate(invoice.dueDate)}`, rightColX, yPos + 22);
   }
 
   // ---- OBJET ----
-  yPos = 100;
+  yPos = 96;
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...black);
-  doc.text('Objet:', margin, yPos);
+  doc.text('Objet :', margin, yPos);
   doc.setFont('helvetica', 'normal');
-  doc.text(invoice.title, margin + 18, yPos);
+  doc.setTextColor(...darkGray);
+  doc.text(invoice.title, margin + 19, yPos);
+  if (invoice.subtitle) {
+    doc.setFontSize(9);
+    doc.setTextColor(...mediumGray);
+    doc.text(invoice.subtitle, margin, yPos + 6);
+    yPos += 6;
+  }
 
   // ---- TABLEAU DES PRESTATIONS ----
   const tableData = invoice.items.map(item => [
@@ -164,96 +182,124 @@ export const exportInvoiceToPDF = (
 
   autoTable(doc, {
     startY: yPos + 8,
-    head: [['Description', 'Qté', 'Prix unitaire', 'Total']],
+    head: [['Description', 'Qt\u00e9', 'Prix unitaire', 'Total']],
     body: tableData,
-    theme: 'plain',
+    theme: 'grid',
     headStyles: {
-      fillColor: [20, 20, 20],
+      fillColor: tableHeaderBg,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 9,
-      cellPadding: 6
+      cellPadding: 6,
+      halign: 'left'
     },
     bodyStyles: {
       fontSize: 9,
-      cellPadding: 5,
-      textColor: [40, 40, 40]
-    },
-    alternateRowStyles: {
-      fillColor: [248, 248, 248]
-    },
-    columnStyles: {
-      0: { cellWidth: 85 },
-      1: { cellWidth: 20, halign: 'center' },
-      2: { cellWidth: 40, halign: 'right' },
-      3: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
-    },
-    styles: {
-      lineColor: [220, 220, 220],
+      cellPadding: 6,
+      textColor: [40, 40, 40],
+      lineColor: [230, 230, 230],
       lineWidth: 0.3
     },
+    alternateRowStyles: {
+      fillColor: altRowBg
+    },
+    columnStyles: {
+      0: { cellWidth: 80, halign: 'left' },
+      1: { cellWidth: 20, halign: 'center' },
+      2: { cellWidth: 42, halign: 'right' },
+      3: { cellWidth: 42, halign: 'right', fontStyle: 'bold' }
+    },
+    styles: {
+      lineColor: [230, 230, 230],
+      lineWidth: 0.3,
+      overflow: 'linebreak'
+    },
+    tableLineColor: [230, 230, 230],
+    tableLineWidth: 0.3,
     margin: { left: margin, right: margin }
   });
 
   // ---- TOTAUX ----
-  const finalY = doc.lastAutoTable.finalY + 12;
-  const totalsX = pageWidth - margin - 80;
-
-  // Ligne séparatrice avant les totaux
-  doc.setDrawColor(...lightGray);
-  doc.setLineWidth(0.3);
-  doc.line(totalsX - 5, finalY - 5, pageWidth - margin, finalY - 5);
+  const finalY = doc.lastAutoTable.finalY + 10;
+  const totalsX = pageWidth - margin - 85;
+  const totalsRight = pageWidth - margin;
 
   // Sous-total
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...darkGray);
+  doc.setTextColor(...mediumGray);
   doc.text('Sous-total HT', totalsX, finalY);
-  doc.text(formatCurrency(invoice.subtotal), pageWidth - margin, finalY, { align: 'right' });
+  doc.setTextColor(...darkGray);
+  doc.text(formatCurrency(invoice.subtotal), totalsRight, finalY, { align: 'right' });
 
   // Taxe
   const taxLabel = invoice.taxRate > 0 ? `TVA (${invoice.taxRate}%)` : 'TVA (0%)';
+  doc.setTextColor(...mediumGray);
   doc.text(taxLabel, totalsX, finalY + 7);
-  doc.text(formatCurrency(invoice.taxAmount), pageWidth - margin, finalY + 7, { align: 'right' });
+  doc.setTextColor(...darkGray);
+  doc.text(formatCurrency(invoice.taxAmount), totalsRight, finalY + 7, { align: 'right' });
 
-  // Ligne avant total
+  // Ligne s\u00e9paratrice
   doc.setDrawColor(...black);
-  doc.setLineWidth(0.8);
-  doc.line(totalsX - 5, finalY + 13, pageWidth - margin, finalY + 13);
+  doc.setLineWidth(1);
+  doc.line(totalsX - 5, finalY + 12, totalsRight, finalY + 12);
 
   // TOTAL TTC
   doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...black);
-  doc.text('TOTAL TTC', totalsX, finalY + 22);
-  doc.text(formatCurrency(invoice.total), pageWidth - margin, finalY + 22, { align: 'right' });
+  doc.text('TOTAL TTC', totalsX, finalY + 21);
+  doc.text(formatCurrency(invoice.total), totalsRight, finalY + 21, { align: 'right' });
 
   // ---- CONDITIONS ----
-  const conditionsY = finalY + 42;
+  const conditionsY = finalY + 40;
+
+  // Label "CONDITIONS"
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...mediumGray);
+  doc.text('CONDITIONS', margin, conditionsY);
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...mediumGray);
 
   if (invoice.type === 'facture') {
-    doc.text('Conditions de paiement : Paiement à 30 jours.', margin, conditionsY);
-    doc.text('En cas de retard : pénalités de 3% par mois. Escompte de 2% si paiement à 8 jours.', margin, conditionsY + 5);
+    doc.text('\u2022 Paiement \u00e0 30 jours', margin, conditionsY + 6);
+    doc.text('\u2022 Retard : p\u00e9nalit\u00e9s 3%/mois', margin, conditionsY + 11);
+    doc.text('\u2022 Escompte 2% si paiement \u00e0 8 jours', margin, conditionsY + 16);
   } else {
-    doc.text('Ce devis est valable 30 jours à compter de sa date d\'émission.', margin, conditionsY);
-    doc.text('Merci de retourner ce devis signé avec la mention "Bon pour accord".', margin, conditionsY + 5);
+    doc.text('\u2022 Devis valable 30 jours', margin, conditionsY + 6);
+    doc.text('\u2022 Retourner sign\u00e9 avec mention "Bon pour accord"', margin, conditionsY + 11);
+  }
+
+  // Contact (droite)
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CONTACT', rightColX, conditionsY);
+
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  let contactY = conditionsY + 6;
+  if (professionalProfile?.emailPro) {
+    doc.text(professionalProfile.emailPro, rightColX, contactY);
+    contactY += 5;
+  }
+  if (professionalProfile?.telephone) {
+    doc.text(professionalProfile.telephone, rightColX, contactY);
+    contactY += 5;
   }
 
   // Notes
   if (invoice.notes) {
     doc.setTextColor(...darkGray);
-    doc.text(`Note : ${invoice.notes}`, margin, conditionsY + 14);
+    doc.text(`Note : ${invoice.notes}`, margin, conditionsY + 24);
   }
 
   // ---- PIED DE PAGE ----
-  // Ligne fine
   doc.setDrawColor(...lightGray);
   doc.setLineWidth(0.3);
-  doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
+  doc.line(margin, pageHeight - 16, pageWidth - margin, pageHeight - 16);
 
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
@@ -263,18 +309,9 @@ export const exportInvoiceToPDF = (
     professionalProfile?.nomEntreprise,
     professionalProfile?.formeJuridique,
     professionalProfile?.siret ? `NINEA: ${professionalProfile.siret}` : null
-  ].filter(Boolean).join('  ·  ');
+  ].filter(Boolean).join('  \u00b7  ');
 
-  doc.text(footerParts, pageWidth / 2, pageHeight - 12, { align: 'center' });
-
-  // Contact en footer
-  const contactParts = [
-    professionalProfile?.emailPro,
-    professionalProfile?.telephone
-  ].filter(Boolean).join('  ·  ');
-  if (contactParts) {
-    doc.text(contactParts, pageWidth / 2, pageHeight - 8, { align: 'center' });
-  }
+  doc.text(footerParts, pageWidth / 2, pageHeight - 10, { align: 'center' });
 
   // ---- SAUVEGARDE ----
   doc.save(`${invoice.type}_${invoice.number}.pdf`);

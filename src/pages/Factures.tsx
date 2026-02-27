@@ -7,11 +7,10 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
-import { Plus, Search, Eye, Edit, Trash2, Send, RefreshCw, FileText, Receipt } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Trash2, RefreshCw, FileText, Receipt } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import NewInvoiceModal from '../components/modals/NewInvoiceModal';
 import EditInvoiceModal from '../components/modals/EditInvoiceModal';
-import SendEmailModal from '../components/modals/SendEmailModal';
 import InvoicePDF from '../components/InvoicePDF';
 import { useInvoices } from '../hooks/useInvoices';
 import { useToast } from '../hooks/use-toast';
@@ -24,7 +23,6 @@ const Factures = () => {
   
   const [isNewInvoiceModalOpen, setIsNewInvoiceModalOpen] = useState(false);
   const [isEditInvoiceModalOpen, setIsEditInvoiceModalOpen] = useState(false);
-  const [isSendEmailModalOpen, setIsSendEmailModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,19 +57,6 @@ const Factures = () => {
       currency: 'XOF',
       minimumFractionDigits: 0
     }).format(amount);
-  };
-
-  const handleSendEmail = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
-    setIsSendEmailModalOpen(true);
-  };
-
-  const handleEmailSent = async (invoiceId: string) => {
-    await updateStatus(invoiceId, 'Envoyé');
-    toast({
-      title: "Email envoyé",
-      description: "Le document a été envoyé avec succès"
-    });
   };
 
   const handleTransformToInvoice = async (devis: Invoice) => {
@@ -128,10 +113,6 @@ const Factures = () => {
   const canDelete = (invoice: Invoice) => {
     // Suppression possible pour tout sauf les factures payées (comptabilité)
     return invoice.status !== 'Payé';
-  };
-
-  const canSendEmail = (invoice: Invoice) => {
-    return invoice.status === 'Brouillon' || invoice.status === 'Validé';
   };
 
   const getAvailableStatuses = (invoice: Invoice): Invoice['status'][] => {
@@ -370,18 +351,6 @@ const Factures = () => {
                           </Button>
                         )}
                         
-                        {canSendEmail(invoice) && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="text-white/80 hover:text-white p-2"
-                            onClick={() => handleSendEmail(invoice)}
-                            title="Envoyer par email"
-                          >
-                            <Send className="w-4 h-4" />
-                          </Button>
-                        )}
-                        
                         {canTransformToInvoice(invoice) && (
                           <Button 
                             size="sm" 
@@ -472,12 +441,6 @@ const Factures = () => {
           onSave={handleSaveInvoice}
         />
 
-        <SendEmailModal
-          open={isSendEmailModalOpen}
-          onOpenChange={setIsSendEmailModalOpen}
-          invoice={selectedInvoice}
-          onEmailSent={handleEmailSent}
-        />
       </div>
     </div>
   );
