@@ -172,7 +172,7 @@ export const exportInvoiceToPDF = (
     yPos += 6;
   }
 
-  // ---- TABLEAU DES PRESTATIONS ----
+  // ---- TABLEAU DES PRESTATIONS (identique à l'aperçu) ----
   const tableData = invoice.items.map(item => [
     item.description,
     item.quantity.toString(),
@@ -180,42 +180,70 @@ export const exportInvoiceToPDF = (
     formatCurrency(item.total)
   ]);
 
+  const tableWidth = pageWidth - margin * 2;
+
   autoTable(doc, {
     startY: yPos + 8,
-    head: [['Description', 'Qt\u00e9', 'Prix unitaire', 'Total']],
+    head: [['Description', 'Qté', 'Prix unitaire', 'Total']],
     body: tableData,
-    theme: 'grid',
+    theme: 'plain',
     headStyles: {
       fillColor: tableHeaderBg,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 9,
-      cellPadding: 6,
-      halign: 'left'
+      cellPadding: { top: 5, bottom: 5, left: 6, right: 6 },
+      halign: 'left',
+      lineWidth: 0
     },
     bodyStyles: {
       fontSize: 9,
-      cellPadding: 6,
-      textColor: [40, 40, 40],
-      lineColor: [230, 230, 230],
-      lineWidth: 0.3
+      cellPadding: { top: 5, bottom: 5, left: 6, right: 6 },
+      textColor: [60, 60, 60],
+      lineWidth: 0
     },
     alternateRowStyles: {
       fillColor: altRowBg
     },
     columnStyles: {
-      0: { cellWidth: 80, halign: 'left' },
-      1: { cellWidth: 20, halign: 'center' },
-      2: { cellWidth: 42, halign: 'right' },
-      3: { cellWidth: 42, halign: 'right', fontStyle: 'bold' }
+      0: { cellWidth: tableWidth * 0.46, halign: 'left', textColor: [40, 40, 40] },
+      1: { cellWidth: tableWidth * 0.10, halign: 'center', textColor: [100, 100, 100] },
+      2: { cellWidth: tableWidth * 0.22, halign: 'right', textColor: [100, 100, 100] },
+      3: { cellWidth: tableWidth * 0.22, halign: 'right', fontStyle: 'bold', textColor: [20, 20, 20] }
     },
     styles: {
-      lineColor: [230, 230, 230],
-      lineWidth: 0.3,
+      lineWidth: 0,
       overflow: 'linebreak'
     },
-    tableLineColor: [230, 230, 230],
-    tableLineWidth: 0.3,
+    // Bordures horizontales subtiles entre les lignes (comme l'aperçu)
+    didDrawCell: (data: any) => {
+      // Ligne sous chaque ligne du body (sauf alternateRow qui a déjà un fond)
+      if (data.section === 'body') {
+        doc.setDrawColor(230, 230, 230);
+        doc.setLineWidth(0.3);
+        doc.line(
+          data.cell.x,
+          data.cell.y + data.cell.height,
+          data.cell.x + data.cell.width,
+          data.cell.y + data.cell.height
+        );
+      }
+    },
+    // Bordure extérieure autour du tableau
+    didDrawPage: (data: any) => {
+      const table = data.table;
+      if (table) {
+        doc.setDrawColor(210, 210, 210);
+        doc.setLineWidth(0.4);
+        // Cadre extérieur
+        doc.rect(
+          margin,
+          table.startY,
+          tableWidth,
+          table.finalY - table.startY
+        );
+      }
+    },
     margin: { left: margin, right: margin }
   });
 
