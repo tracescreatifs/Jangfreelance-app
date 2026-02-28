@@ -73,7 +73,7 @@ const PaiementSuccess = () => {
     return (
       <div className="min-h-screen">
         <Sidebar />
-        <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8 flex items-center justify-center min-h-screen">
+        <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 flex items-center justify-center min-h-screen">
           <div className="glass-morphism p-8 rounded-2xl max-w-md w-full text-center">
             <Loader2 className="w-16 h-16 text-purple-400 animate-spin mx-auto mb-6" />
             <h2 className="text-2xl font-bold text-white mb-4">Traitement en cours...</h2>
@@ -89,7 +89,7 @@ const PaiementSuccess = () => {
   return (
     <div className="min-h-screen">
       <Sidebar />
-      <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8 flex items-center justify-center min-h-screen">
+      <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8 flex items-center justify-center min-h-screen">
         <div className="glass-morphism p-8 rounded-2xl max-w-md w-full text-center">
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-12 h-12 text-white" />

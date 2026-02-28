@@ -220,7 +220,7 @@ const Exports = () => {
     <div className="min-h-screen">
       <Sidebar />
 
-      <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8">
+      <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Exports</h1>

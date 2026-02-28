@@ -199,7 +199,7 @@ const Comptabilite = () => {
     <div className="min-h-screen">
       <Sidebar />
 
-      <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8">
+      <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>

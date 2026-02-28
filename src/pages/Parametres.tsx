@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { User, Building, Calculator, Palette, Shield, Bell, Globe, Settings, Menu, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { User, Building, Calculator, Palette, Shield, Bell, Globe, Settings } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import ProfilPersonnel from '../components/parametres/ProfilPersonnel';
 import ProfilProfessionnel from '../components/parametres/ProfilProfessionnel';
@@ -10,11 +10,10 @@ import Securite from '../components/parametres/Securite';
 import Notifications from '../components/parametres/Notifications';
 import Localisation from '../components/parametres/Localisation';
 import PreferencesMetier from '../components/parametres/PreferencesMetier';
-import { Button } from '../components/ui/button';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useProfessionalProfile } from '../hooks/useProfessionalProfile';
 
-type ParametreSection = 
+type ParametreSection =
   | 'profil-personnel'
   | 'profil-professionnel'
   | 'configuration-fiscale'
@@ -26,11 +25,20 @@ type ParametreSection =
 
 const Parametres = () => {
   const [activeSection, setActiveSection] = useState<ParametreSection>('profil-personnel');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile: userProfile } = useUserProfile();
   const { profile: proProfile } = useProfessionalProfile();
+  const tabsRef = useRef<HTMLDivElement>(null);
 
-  // Calculer les initiales du nom
+  // Scroll active tab into view on mobile
+  useEffect(() => {
+    if (tabsRef.current) {
+      const activeTab = tabsRef.current.querySelector('[data-active="true"]');
+      if (activeTab) {
+        activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [activeSection]);
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -44,14 +52,14 @@ const Parametres = () => {
   const displayTitle = proProfile?.secteurActivite || 'Freelance';
 
   const sections = [
-    { id: 'profil-personnel' as const, name: 'Profil Personnel', icon: User },
-    { id: 'profil-professionnel' as const, name: 'Profil Professionnel', icon: Building },
-    { id: 'configuration-fiscale' as const, name: 'Configuration Fiscale', icon: Calculator },
-    { id: 'personnalisation' as const, name: 'Personnalisation', icon: Palette },
-    { id: 'securite' as const, name: 'Sécurité & Licence', icon: Shield },
-    { id: 'notifications' as const, name: 'Notifications', icon: Bell },
-    { id: 'localisation' as const, name: 'Localisation', icon: Globe },
-    { id: 'preferences-metier' as const, name: 'Préférences Métier', icon: Settings },
+    { id: 'profil-personnel' as const, name: 'Profil', fullName: 'Profil Personnel', icon: User },
+    { id: 'profil-professionnel' as const, name: 'Entreprise', fullName: 'Profil Professionnel', icon: Building },
+    { id: 'configuration-fiscale' as const, name: 'Fiscal', fullName: 'Configuration Fiscale', icon: Calculator },
+    { id: 'personnalisation' as const, name: 'Thème', fullName: 'Personnalisation', icon: Palette },
+    { id: 'securite' as const, name: 'Sécurité', fullName: 'Sécurité & Licence', icon: Shield },
+    { id: 'notifications' as const, name: 'Notifs', fullName: 'Notifications', icon: Bell },
+    { id: 'localisation' as const, name: 'Langue', fullName: 'Localisation', icon: Globe },
+    { id: 'preferences-metier' as const, name: 'Métier', fullName: 'Préférences Métier', icon: Settings },
   ];
 
   const renderContent = () => {
@@ -78,24 +86,47 @@ const Parametres = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       <Sidebar />
-      
-      <div className="ml-0 lg:ml-64">
-        {/* Mobile menu button */}
-        <div className="lg:hidden p-4">
-          <Button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="glass-morphism border-white/20 text-white"
-            size="sm"
+
+      <div className="lg:ml-64">
+        {/* ── Mobile: Tabs horizontaux scrollables ──────────── */}
+        <div className="lg:hidden pt-16 px-3">
+          <div className="flex items-center gap-2 mb-3 px-1">
+            <Settings className="w-5 h-5 text-white/60" />
+            <h1 className="text-lg font-bold text-white">Paramètres</h1>
+          </div>
+          <div
+            ref={tabsRef}
+            className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide -mx-3 px-3"
+            style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </Button>
+            {sections.map((section) => {
+              const Icon = section.icon;
+              const isActive = activeSection === section.id;
+              return (
+                <button
+                  key={section.id}
+                  data-active={isActive}
+                  onClick={() => setActiveSection(section.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                    isActive
+                      ? 'bg-white/20 text-white shadow-lg border border-white/20'
+                      : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {section.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
+        {/* ── Desktop layout ──────────────────────────────────── */}
         <div className="flex flex-col lg:flex-row min-h-screen">
-          {/* Sidebar des paramètres */}
-          <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-full lg:w-80 lg:min-h-screen lg:fixed lg:left-64 lg:top-0 glass-morphism border-r border-white/20 p-6 z-30`}>
+          {/* Desktop: Sidebar paramètres */}
+          <div className="hidden lg:block w-80 min-h-screen fixed left-64 top-0 glass-morphism border-r border-white/20 p-6 z-30 overflow-y-auto">
             <div className="flex items-center space-x-3 mb-8">
               {userProfile?.photoUrl ? (
                 <img
@@ -108,15 +139,15 @@ const Parametres = () => {
                   {getInitials(displayName)}
                 </div>
               )}
-              <div>
-                <h2 className="text-white font-bold">{displayName}</h2>
-                <p className="text-purple-200 text-sm">{displayTitle}</p>
+              <div className="min-w-0">
+                <h2 className="text-white font-bold truncate">{displayName}</h2>
+                <p className="text-purple-200 text-sm truncate">{displayTitle}</p>
               </div>
             </div>
 
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-white mb-2 flex items-center">
-                <Settings className="w-6 h-6 mr-2" />
+                <Settings className="w-6 h-6 mr-2 flex-shrink-0" />
                 PARAMÈTRES
               </h1>
             </div>
@@ -125,25 +156,22 @@ const Parametres = () => {
               {sections.map((section) => (
                 <button
                   key={section.id}
-                  onClick={() => {
-                    setActiveSection(section.id);
-                    setSidebarOpen(false);
-                  }}
+                  onClick={() => setActiveSection(section.id)}
                   className={`w-full flex items-center px-4 py-3 rounded-lg transition-all duration-200 text-left ${
                     activeSection === section.id
                       ? 'bg-white/20 text-white shadow-lg'
                       : 'text-purple-100 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  <section.icon className="w-5 h-5 mr-3" />
-                  <span className="font-medium">{section.name}</span>
+                  <section.icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                  <span className="font-medium truncate">{section.fullName}</span>
                 </button>
               ))}
             </nav>
           </div>
 
           {/* Contenu principal */}
-          <div className="flex-1 lg:ml-80 p-6 lg:p-8">
+          <div className="flex-1 lg:ml-80 p-4 sm:p-6 lg:p-8">
             <div className="max-w-4xl mx-auto">
               {renderContent()}
             </div>

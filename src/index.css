@@ -4,6 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Masquer scrollbar horizontale sur les tabs */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ============================================
    JANG v1.0 - NOIR & BLANC / LIQUID GLASS
    ============================================ */
@@ -54,6 +58,7 @@
 html, body, #root {
   height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
 }
 
 /* ============================================

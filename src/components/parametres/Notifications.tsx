@@ -208,10 +208,10 @@ const Notifications = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="glass-morphism p-8 rounded-2xl">
-        <div className="flex items-center space-x-3 mb-8">
-          <Bell className="w-8 h-8 text-purple-300" />
-          <h1 className="text-3xl font-bold text-white">Notifications</h1>
+      <div className="glass-morphism p-4 sm:p-6 lg:p-8 rounded-2xl">
+        <div className="flex items-center space-x-3 mb-6 sm:mb-8">
+          <Bell className="w-6 h-6 sm:w-8 sm:h-8 text-purple-300" />
+          <h1 className="text-xl sm:text-3xl font-bold text-white">Notifications</h1>
         </div>
 
         <div className="space-y-8">

@@ -218,7 +218,7 @@ const Index = () => {
     <div className="min-h-screen">
       <Sidebar />
 
-      <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8">
+      <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         {showProfileBanner && (
           <div className="mb-4 backdrop-blur-xl bg-white/10 border border-white/20 rounded-xl p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">

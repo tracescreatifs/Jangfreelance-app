@@ -79,7 +79,7 @@ const Tarifs = () => {
     return (
       <div className="min-h-screen">
         <Sidebar />
-        <div className="ml-0 lg:ml-64 p-8 flex items-center justify-center">
+        <div className="lg:ml-64 p-8 pt-16 lg:pt-8 flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -90,7 +90,7 @@ const Tarifs = () => {
     <div className="min-h-screen">
       <Sidebar />
 
-      <div className="ml-0 lg:ml-64 p-4 sm:p-6 lg:p-8">
+      <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">

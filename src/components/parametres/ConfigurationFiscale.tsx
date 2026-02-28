@@ -115,7 +115,7 @@ const ConfigurationFiscale = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="glass-morphism p-8 rounded-2xl">
+      <div className="glass-morphism p-4 sm:p-6 lg:p-8 rounded-2xl">
         <div className="flex items-center space-x-3 mb-8">
           <Calculator className="w-8 h-8 text-purple-300" />
           <h1 className="text-3xl font-bold text-white">Configuration Fiscale</h1>

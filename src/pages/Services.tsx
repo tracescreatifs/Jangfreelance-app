@@ -200,7 +200,7 @@ const Services = () => {
     return (
       <div className="min-h-screen">
         <Sidebar />
-        <div className="ml-0 lg:ml-64 p-6 lg:p-8">
+        <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-4 border-white/40 border-t-transparent rounded-full animate-spin" />
           </div>
@@ -212,7 +212,7 @@ const Services = () => {
   return (
     <div className="min-h-screen">
       <Sidebar />
-      <div className="ml-0 lg:ml-64 p-6 lg:p-8">
+      <div className="lg:ml-64 p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
