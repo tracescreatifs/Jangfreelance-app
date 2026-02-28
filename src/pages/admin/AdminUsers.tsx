@@ -273,7 +273,7 @@ const AdminUsers: React.FC = () => {
                       <TableHead className="hidden sm:table-cell text-white/60">Plan actif</TableHead>
                       <TableHead className="hidden md:table-cell text-white/60">NINEA</TableHead>
                       <TableHead className="hidden md:table-cell text-white/60">RCCM</TableHead>
-                      <TableHead className="hidden md:table-cell text-white/60">R\u00e9gime fiscal</TableHead>
+                      <TableHead className="hidden md:table-cell text-white/60">Régime fiscal</TableHead>
                       <TableHead className="hidden md:table-cell text-white/60">Date inscription</TableHead>
                       <TableHead className="text-white/60 text-right">Actions</TableHead>
                     </TableRow>
