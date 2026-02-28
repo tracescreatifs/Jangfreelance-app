@@ -3,6 +3,18 @@ import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { sendWelcomeEmail } from '@/services/emailService';
 import { LicenseGenerator } from '@/utils/licenseGenerator';
+import { pushNotificationService } from '@/services/pushNotificationService';
+
+/** S'abonner aux push notifications silencieusement (fire-and-forget) */
+const autoSubscribePush = (userId: string) => {
+  try {
+    if (pushNotificationService.isSupported() && Notification.permission === 'granted') {
+      pushNotificationService.subscribe(userId).catch(() => {});
+    }
+  } catch {
+    // Silencieux
+  }
+};
 
 interface AuthContextType {
   session: Session | null;
@@ -136,6 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchUserRole(session.user.id);
         checkLicenseExpiry(session.user.id);
         fetchOnboardingStatus(session.user.id);
+        autoSubscribePush(session.user.id);
       }
       setLoading(false);
     });
@@ -149,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           fetchUserRole(session.user.id);
           checkLicenseExpiry(session.user.id);
           fetchOnboardingStatus(session.user.id);
+          autoSubscribePush(session.user.id);
         } else {
           setRole('user');
           setLicenseExpired(false);
