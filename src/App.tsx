@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import RootRoute from "@/components/RootRoute";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -58,8 +59,10 @@ const App = () => (
             {/* Route onboarding */}
             <Route path="/onboarding" element={<ProtectedRoute skipOnboardingCheck><Onboarding /></ProtectedRoute>} />
 
+            {/* Route racine : Landing (non connecté) / Dashboard (connecté) */}
+            <Route path="/" element={<RootRoute />} />
+
             {/* Routes protégées */}
-            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/projets" element={<ProtectedRoute><Projets /></ProtectedRoute>} />
             <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
             <Route path="/timer" element={<ProtectedRoute><TimerPage /></ProtectedRoute>} />

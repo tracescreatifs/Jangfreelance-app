@@ -616,3 +616,176 @@ body::before {
 [data-radix-popper-content-wrapper] {
   z-index: 100 !important;
 }
+
+/* ============================================
+   LANDING PAGE - Animations & Scoped Styles
+   ============================================ */
+
+/* Smooth scroll for the whole page */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+/* ---- Floating blobs animation ---- */
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  33% { transform: translateY(-20px) scale(1.02); }
+  66% { transform: translateY(10px) scale(0.98); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0) scale(1); }
+  33% { transform: translateY(15px) scale(0.97); }
+  66% { transform: translateY(-25px) scale(1.03); }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-30px) rotate(5deg); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 10s ease-in-out infinite;
+}
+
+/* ---- Scroll reveal animations ---- */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.animate-on-scroll.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---- Stagger children for grids ---- */
+.stagger-children.in-view > * {
+  animation: slideUp 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.stagger-children.in-view > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children.in-view > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children.in-view > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children.in-view > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children.in-view > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children.in-view > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children.in-view > *:nth-child(7) { animation-delay: 0.35s; }
+.stagger-children.in-view > *:nth-child(8) { animation-delay: 0.4s; }
+.stagger-children.in-view > *:nth-child(9) { animation-delay: 0.45s; }
+.stagger-children.in-view > *:nth-child(10) { animation-delay: 0.5s; }
+
+/* ---- Pulse glow for CTAs ---- */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(139, 92, 246, 0.6); }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* ---- Landing page scoped styles ---- */
+/* Restore purple/blue gradients ONLY inside .landing-page */
+.landing-page .bg-gradient-to-r.from-purple-500.to-blue-500,
+.landing-page .bg-gradient-to-r.from-purple-500.to-blue-500:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%) !important;
+}
+
+.landing-page .bg-gradient-to-r.from-purple-400.to-blue-400 {
+  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%) !important;
+}
+
+.landing-page .text-purple-400 {
+  color: #a78bfa !important;
+}
+
+.landing-page .text-purple-300 {
+  color: #c4b5fd !important;
+}
+
+.landing-page .text-purple-200 {
+  color: #ddd6fe !important;
+}
+
+.landing-page .text-blue-400 {
+  color: #60a5fa !important;
+}
+
+.landing-page .border-purple-500\/50 {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+}
+
+.landing-page .bg-purple-500 {
+  background-color: #8b5cf6 !important;
+}
+
+.landing-page .bg-purple-500\/10 {
+  background-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+.landing-page .border-purple-400 {
+  border-color: #a78bfa !important;
+}
+
+/* Landing glass morphism with purple tint */
+.landing-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.landing-glass:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+}
+
+/* ---- Gradient text utility ---- */
+.gradient-text {
+  background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---- Navbar glass effect ---- */
+.landing-navbar-glass {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
